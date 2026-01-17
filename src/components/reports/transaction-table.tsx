@@ -2,16 +2,32 @@
 
 import { ReportTransaction } from "@/actions/reports"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Pencil, Trash2 } from "lucide-react"
+import { deleteTransaction } from "@/actions/transactions"
+import { useRouter } from "next/navigation"
 
 interface TransactionTableProps {
     transactions: ReportTransaction[]
 }
 
 export function TransactionTable({ transactions }: TransactionTableProps) {
+    const router = useRouter()
     const currencyFormatter = new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'USD',
     })
+
+    const handleDelete = async (id: string, description: string) => {
+        if (!confirm(`Delete transaction: "${description}"?`)) return
+
+        const result = await deleteTransaction(id)
+        if (result.error) {
+            alert('Failed to delete: ' + result.error)
+        } else {
+            router.refresh()
+        }
+    }
 
     if (transactions.length === 0) {
         return (
@@ -27,10 +43,11 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                 <thead className="bg-muted/50 border-b">
                     <tr className="text-left">
                         <th className="h-12 px-4 font-medium text-muted-foreground">Date</th>
-                        <th className="h-12 px-4 font-medium text-muted-foreground center">Description</th>
+                        <th className="h-12 px-4 font-medium text-muted-foreground">Description</th>
                         <th className="h-12 px-4 font-medium text-muted-foreground hidden md:table-cell">Category</th>
                         <th className="h-12 px-4 font-medium text-muted-foreground hidden md:table-cell">Type</th>
                         <th className="h-12 px-4 font-medium text-muted-foreground text-right">Amount</th>
+                        <th className="h-12 px-4 font-medium text-muted-foreground text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody className="[&_tr:last-child]:border-0">
@@ -41,35 +58,37 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                             </td>
                             <td className="p-4 align-middle font-medium">
                                 {tx.description}
-                                {tx.evidencePath && (
-                                    <span className="ml-2 text-xs text-blue-600 bg-blue-50 px-1 py-0.5 rounded border border-blue-100">
-                                        Has Receipt
-                                    </span>
-                                )}
                             </td>
                             <td className="p-4 align-middle hidden md:table-cell">
-                                <Badge variant="outline">{tx.category}</Badge>
+                                <span className="text-muted-foreground">{tx.category}</span>
                             </td>
                             <td className="p-4 align-middle hidden md:table-cell">
-                                <Badge
-                                    className={
-                                        tx.type === 'INCOME' ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-100" :
-                                            tx.type === 'EXPENSE' ? "bg-red-100 text-red-800 border-red-200 hover:bg-red-100" :
-                                                "bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-100"
-                                    }
-                                    variant="secondary"
-                                >
+                                <Badge variant={tx.type === 'INCOME' ? 'default' : tx.type === 'EXPENSE' ? 'destructive' : 'secondary'}>
                                     {tx.type}
                                 </Badge>
                             </td>
-                            <td className="p-4 align-middle text-right font-medium">
-                                <span className={
-                                    tx.type === 'INCOME' ? "text-green-600" :
-                                        tx.type === 'EXPENSE' ? "text-red-600" :
-                                            ""
-                                }>
-                                    {tx.type === 'EXPENSE' ? "-" : "+"}{currencyFormatter.format(tx.amount)}
-                                </span>
+                            <td className="p-4 align-middle text-right font-mono">
+                                {currencyFormatter.format(tx.amount)}
+                            </td>
+                            <td className="p-4 align-middle text-right">
+                                <div className="flex justify-end gap-2">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        onClick={() => router.push(`/reports/edit/${tx.id}`)}
+                                    >
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-destructive hover:text-destructive"
+                                        onClick={() => handleDelete(tx.id, tx.description)}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </td>
                         </tr>
                     ))}

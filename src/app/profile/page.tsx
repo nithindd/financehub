@@ -1,15 +1,11 @@
 import { createClient } from '@/utils/supabase/server'
-import { getUserPreferences, updateUserPreferences } from '@/actions/profile'
+import { getUserPreferences } from '@/actions/profile'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
+import { TimezoneForm } from '@/components/profile/timezone-form'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
-import { revalidatePath } from 'next/cache'
-
-// Get list of timezones
-const timezones = Intl.supportedValuesOf('timeZone')
 
 export default async function ProfilePage() {
     const supabase = await createClient()
@@ -20,13 +16,6 @@ export default async function ProfilePage() {
     }
 
     const preferences = await getUserPreferences()
-
-    async function handleTimezoneUpdate(formData: FormData) {
-        'use server'
-        const timezone = formData.get('timezone') as string
-        await updateUserPreferences(timezone)
-        revalidatePath('/profile')
-    }
 
     return (
         <div className="flex min-h-screen flex-col bg-muted/20">
@@ -64,25 +53,26 @@ export default async function ProfilePage() {
                             <CardDescription>Customize your experience</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <form action={handleTimezoneUpdate} className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="timezone">Timezone</Label>
-                                    <Select name="timezone" defaultValue={preferences?.timezone || 'UTC'}>
-                                        <SelectTrigger id="timezone">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent className="max-h-[300px]">
-                                            {timezones.map(tz => (
-                                                <SelectItem key={tz} value={tz}>{tz}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    <p className="text-sm text-muted-foreground">
-                                        Used for transaction dates and timestamps
-                                    </p>
-                                </div>
-                                <Button type="submit">Save Preferences</Button>
-                            </form>
+                            <TimezoneForm initialTimezone={preferences?.timezone || 'UTC'} />
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Settings</CardTitle>
+                            <CardDescription>Manage categories and vendor mappings</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            <Link href="/settings/categories">
+                                <Button variant="outline" className="w-full justify-start">
+                                    Manage Categories
+                                </Button>
+                            </Link>
+                            <Link href="/settings/vendors">
+                                <Button variant="outline" className="w-full justify-start">
+                                    Vendor Mappings
+                                </Button>
+                            </Link>
                         </CardContent>
                     </Card>
                 </div>
