@@ -1,5 +1,6 @@
 'use client'
 
+import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Download, Mail } from "lucide-react"
 import { jsPDF } from "jspdf"
@@ -72,6 +73,21 @@ export function ExportActions({ data, startDate, endDate, onEmailClick }: Export
         doc.save(`financial_report_${startDate.toISOString().split('T')[0]}.pdf`)
     }
 
+    const [isEmailing, setIsEmailing] = React.useState(false)
+
+    const handleEmail = async () => {
+        setIsEmailing(true)
+        try {
+            await onEmailClick()
+            alert("Report sent! (Check console for simulation)")
+        } catch (error) {
+            console.error(error)
+            alert("Failed to send report")
+        } finally {
+            setIsEmailing(false)
+        }
+    }
+
     return (
         <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={handleDownloadCSV}>
@@ -80,8 +96,9 @@ export function ExportActions({ data, startDate, endDate, onEmailClick }: Export
             <Button variant="outline" size="sm" onClick={handleDownloadPDF}>
                 <Download className="mr-2 h-4 w-4" /> PDF
             </Button>
-            <Button variant="default" size="sm" onClick={onEmailClick}>
-                <Mail className="mr-2 h-4 w-4" /> Email Report
+            <Button variant="default" size="sm" onClick={handleEmail} disabled={isEmailing}>
+                <Mail className="mr-2 h-4 w-4" />
+                {isEmailing ? "Sending..." : "Email Report"}
             </Button>
         </div>
     )

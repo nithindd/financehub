@@ -27,9 +27,9 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                 <thead className="bg-muted/50 border-b">
                     <tr className="text-left">
                         <th className="h-12 px-4 font-medium text-muted-foreground">Date</th>
-                        <th className="h-12 px-4 font-medium text-muted-foreground">Description</th>
-                        <th className="h-12 px-4 font-medium text-muted-foreground">Category</th>
-                        <th className="h-12 px-4 font-medium text-muted-foreground">Type</th>
+                        <th className="h-12 px-4 font-medium text-muted-foreground center">Description</th>
+                        <th className="h-12 px-4 font-medium text-muted-foreground hidden md:table-cell">Category</th>
+                        <th className="h-12 px-4 font-medium text-muted-foreground hidden md:table-cell">Type</th>
                         <th className="h-12 px-4 font-medium text-muted-foreground text-right">Amount</th>
                     </tr>
                 </thead>
@@ -47,10 +47,10 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                                     </span>
                                 )}
                             </td>
-                            <td className="p-4 align-middle">
+                            <td className="p-4 align-middle hidden md:table-cell">
                                 <Badge variant="outline">{tx.category}</Badge>
                             </td>
-                            <td className="p-4 align-middle">
+                            <td className="p-4 align-middle hidden md:table-cell">
                                 <Badge
                                     className={
                                         tx.type === 'INCOME' ? "bg-green-100 text-green-800 border-green-200 hover:bg-green-100" :
