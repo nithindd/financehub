@@ -122,7 +122,10 @@ export function EditTransactionDialog({ transactionId, open, onOpenChange }: Edi
                         <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
                             <Label htmlFor="date" className="sm:text-right">Date</Label>
                             <div className="sm:col-span-3">
-                                <DatePicker date={date} setDate={setDate} />
+                                <DatePicker
+                                    date={date}
+                                    setDate={(d) => d && setDate(d)}
+                                />
                             </div>
                         </div>
 
