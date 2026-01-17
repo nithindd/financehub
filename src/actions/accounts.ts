@@ -86,3 +86,50 @@ export async function seedDefaultAccounts() {
     revalidatePath('/')
     return { success: true }
 }
+
+export async function updateAccount(id: string, name: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    const { error } = await supabase
+        .from('accounts')
+        .update({ name })
+        .eq('id', id)
+        .eq('user_id', user.id)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/')
+    revalidatePath('/settings/categories')
+    return { success: true }
+}
+
+export async function deleteAccount(id: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    // Check if account has transactions
+    const { count } = await supabase
+        .from('journal_entries')
+        .select('*', { count: 'exact', head: true })
+        .eq('account_id', id)
+
+    if (count && count > 0) {
+        return { error: `Cannot delete account with ${count} existing transactions` }
+    }
+
+    const { error } = await supabase
+        .from('accounts')
+        .delete()
+        .eq('id', id)
+        .eq('user_id', user.id)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/')
+    revalidatePath('/settings/categories')
+    return { success: true }
+}
+
