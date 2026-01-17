@@ -1,13 +1,11 @@
-import { createClient } from '@/utils/supabase/server'
 import { getFinancialReport } from '@/actions/reports'
 import { ReportFilters } from '@/components/reports/report-filters'
 import { ReportSummary } from '@/components/reports/report-summary'
 import { TransactionTable } from '@/components/reports/transaction-table'
 import { ExportActions } from '@/components/reports/export-actions'
 import { startOfMonth, endOfMonth } from 'date-fns'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
+import { Header } from '@/components/layout/header'
+import { createClient } from '@/utils/supabase/server'
 
 // Server Component
 export default async function ReportsPage({
@@ -43,19 +41,9 @@ export default async function ReportsPage({
         return <div className="p-8 text-red-600">Error: {reportData.error}</div>
     }
 
-
-
     return (
         <div className="flex min-h-screen flex-col bg-muted/20">
-            <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-                <Button variant="ghost" size="sm" asChild className="mr-2">
-                    <Link href="/">
-                        <ArrowLeft className="h-4 w-4 mr-2" /> Back
-                    </Link>
-                </Button>
-                <h1 className="text-xl font-semibold tracking-tight text-primary">Financial Reports</h1>
-            </header>
-
+            <Header title="Financial Reports" showBack={true} />
             <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
 
                 <ReportFilters />

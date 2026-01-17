@@ -5,7 +5,8 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { TimezoneForm } from '@/components/profile/timezone-form'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { Header } from '@/components/layout/header'
+import { HelpCircle } from 'lucide-react'
 
 export default async function ProfilePage() {
     const supabase = await createClient()
@@ -19,14 +20,7 @@ export default async function ProfilePage() {
 
     return (
         <div className="flex min-h-screen flex-col bg-muted/20">
-            <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-                <Button variant="ghost" size="sm" asChild className="mr-2">
-                    <Link href="/">
-                        <ArrowLeft className="h-4 w-4 mr-2" /> Back
-                    </Link>
-                </Button>
-                <h1 className="text-xl font-semibold tracking-tight text-primary">Profile Settings</h1>
-            </header>
+            <Header title="Profile Settings" showBack={true} />
 
             <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
                 <div className="mx-auto grid w-full max-w-2xl gap-6">
@@ -56,7 +50,6 @@ export default async function ProfilePage() {
                             <TimezoneForm initialTimezone={preferences?.timezone || 'UTC'} />
                         </CardContent>
                     </Card>
-
                     <Card>
                         <CardHeader>
                             <CardTitle>Settings</CardTitle>
@@ -73,6 +66,15 @@ export default async function ProfilePage() {
                                     Vendor Mappings
                                 </Button>
                             </Link>
+
+                            <div className="pt-4 border-t mt-4">
+                                <Link href="/manual">
+                                    <Button variant="secondary" className="w-full justify-start gap-2">
+                                        <HelpCircle className="h-4 w-4" />
+                                        User Manual & Help
+                                    </Button>
+                                </Link>
+                            </div>
                         </CardContent>
                     </Card>
                 </div>

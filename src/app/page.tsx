@@ -6,11 +6,10 @@ import { AccountSeeder } from '@/components/account-seeder'
 import { TransactionDialog } from '@/components/transaction-dialog'
 import { StatementUploader } from '@/components/statement-uploader'
 import { getDashboardMetrics } from '@/actions/dashboard'
+import { Header } from '@/components/layout/header'
 import Link from 'next/link'
 
 export default async function Dashboard() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
   const metrics = await getDashboardMetrics()
 
   const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -20,15 +19,7 @@ export default async function Dashboard() {
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/20">
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-        <h1 className="text-xl font-semibold tracking-tight text-primary">FinanceHub</h1>
-        <div className="ml-auto flex items-center gap-2">
-          <Link href="/profile">
-            <Button variant="ghost" size="sm">Profile</Button>
-          </Link>
-          <span className="text-sm text-muted-foreground hidden sm:inline-block">{user?.email}</span>
-        </div>
-      </header>
+      <Header title="FinanceHub" />
       <AccountSeeder />
 
       <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
