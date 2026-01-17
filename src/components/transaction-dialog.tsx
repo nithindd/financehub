@@ -229,7 +229,7 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
             }))
 
             const result = await createTransactionBatch(batch)
-            if (result.error) {
+            if (!result.success) {
                 alert(result.error)
             } else {
                 setOpen(false)
@@ -247,7 +247,7 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
                 })),
                 evidencePath: evidencePath || undefined
             })
-            if (result.error) {
+            if (!result.success) {
                 alert(result.error)
             } else {
                 setOpen(false)

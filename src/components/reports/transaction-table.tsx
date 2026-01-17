@@ -28,7 +28,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
         if (!confirm(`Delete transaction: "${description}"?`)) return
 
         const result = await deleteTransaction(id)
-        if (result.error) {
+        if (!result.success) {
             alert('Failed to delete: ' + result.error)
         } else {
             router.refresh()

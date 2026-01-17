@@ -20,7 +20,7 @@ export interface TransactionInput {
 export async function createTransaction(input: TransactionInput) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { error: 'Unauthorized' }
+    if (!user) return { success: false, error: 'Unauthorized' }
 
     // 1. Validate Balance
     const totalDebits = input.entries
@@ -32,7 +32,7 @@ export async function createTransaction(input: TransactionInput) {
         .reduce((sum, e) => sum + e.amount, 0)
 
     if (Math.abs(totalDebits - totalCredits) > 0.01) {
-        return { error: `Transaction not balanced: Debits(${totalDebits}) != Credits(${totalCredits})` }
+        return { success: false, error: `Transaction not balanced: Debits(${totalDebits}) != Credits(${totalCredits})` }
     }
 
     // 2. Create Transaction Header
@@ -49,7 +49,7 @@ export async function createTransaction(input: TransactionInput) {
         .single()
 
     if (txError) {
-        return { error: txError.message }
+        return { success: false, error: txError.message }
     }
 
     // 3. Create Journal Entries
@@ -67,7 +67,7 @@ export async function createTransaction(input: TransactionInput) {
     if (entriesError) {
         // In a real app we might roll back here, but simplified for now
         console.error('Failed to insert entries', entriesError)
-        return { error: 'Transaction header created but entries failed. Please contact support.' }
+        return { success: false, error: 'Transaction header created but entries failed. Please contact support.' }
     }
 
     revalidatePath('/')
@@ -79,11 +79,11 @@ export async function createTransaction(input: TransactionInput) {
  * and its ID is used as parent_id for subsequent transactions if they don't have one.
  */
 export async function createTransactionBatch(inputs: TransactionInput[]) {
-    if (inputs.length === 0) return { error: 'No transactions provided' }
+    if (inputs.length === 0) return { success: false, error: 'No transactions provided' }
 
     // 1. Create the Master Transaction
     const masterResult = await createTransaction(inputs[0])
-    if (masterResult.error || !masterResult.id) return masterResult
+    if (!masterResult.success || !masterResult.id) return { success: false, error: masterResult.error || 'Failed to create master transaction' }
 
     const masterId = masterResult.id
 
@@ -92,7 +92,7 @@ export async function createTransactionBatch(inputs: TransactionInput[]) {
     for (let i = 1; i < inputs.length; i++) {
         const childInput = { ...inputs[i], parentId: masterId }
         const result = await createTransaction(childInput)
-        if (result.error) {
+        if (!result.success) {
             console.error(`Failed to create child transaction ${i}`, result.error)
             // Continue with others or return? Let's continue for now.
         }
@@ -105,14 +105,14 @@ export async function createTransactionBatch(inputs: TransactionInput[]) {
 export async function updateTransaction(id: string, input: TransactionInput) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { error: 'Unauthorized' }
+    if (!user) return { success: false, error: 'Unauthorized' }
 
     // Validate balance
     const totalDebits = input.entries.filter(e => e.type === 'DEBIT').reduce((sum, e) => sum + e.amount, 0)
     const totalCredits = input.entries.filter(e => e.type === 'CREDIT').reduce((sum, e) => sum + e.amount, 0)
 
     if (Math.abs(totalDebits - totalCredits) > 0.01) {
-        return { error: `Transaction not balanced` }
+        return { success: false, error: `Transaction not balanced` }
     }
 
     // Update transaction header
@@ -127,7 +127,7 @@ export async function updateTransaction(id: string, input: TransactionInput) {
         .eq('id', id)
         .eq('user_id', user.id)
 
-    if (txError) return { error: txError.message }
+    if (txError) return { success: false, error: txError.message }
 
     // Delete old entries
     await supabase.from('journal_entries').delete().eq('transaction_id', id)
@@ -141,7 +141,7 @@ export async function updateTransaction(id: string, input: TransactionInput) {
     }))
 
     const { error: entriesError } = await supabase.from('journal_entries').insert(entriesToInsert)
-    if (entriesError) return { error: entriesError.message }
+    if (entriesError) return { success: false, error: entriesError.message }
 
     revalidatePath('/')
     revalidatePath('/reports')
@@ -151,7 +151,7 @@ export async function updateTransaction(id: string, input: TransactionInput) {
 export async function deleteTransaction(id: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { error: 'Unauthorized' }
+    if (!user) return { success: false, error: 'Unauthorized' }
 
     // Delete transaction (journal entries will cascade)
     const { error } = await supabase
@@ -160,7 +160,7 @@ export async function deleteTransaction(id: string) {
         .eq('id', id)
         .eq('user_id', user.id)
 
-    if (error) return { error: error.message }
+    if (error) return { success: false, error: error.message }
 
     revalidatePath('/')
     revalidatePath('/reports')

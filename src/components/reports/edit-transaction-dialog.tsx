@@ -86,7 +86,7 @@ export function EditTransactionDialog({ transactionId, open, onOpenChange }: Edi
         })
         setSaving(false)
 
-        if (result.error) {
+        if (!result.success) {
             alert('Failed to update: ' + result.error)
         } else {
             onOpenChange(false)
