@@ -5,10 +5,17 @@ import { PlusCircle, FileText, Camera } from 'lucide-react'
 import { AccountSeeder } from '@/components/account-seeder'
 import { TransactionDialog } from '@/components/transaction-dialog'
 import { StatementUploader } from '@/components/statement-uploader'
+import { getDashboardMetrics } from '@/actions/dashboard'
 
 export default async function Dashboard() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  const metrics = await getDashboardMetrics()
+
+  const currencyFormatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  })
 
   return (
     <div className="flex min-h-screen flex-col bg-muted/20">
@@ -65,9 +72,11 @@ export default async function Dashboard() {
               </svg>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-success">+$0.00</div>
+              <div className="text-2xl font-bold text-success">
+                {currencyFormatter.format(metrics.totalIncome)}
+              </div>
               <p className="text-xs text-muted-foreground">
-                +0% from last month
+                Lifetime
               </p>
             </CardContent>
           </Card>
@@ -88,9 +97,11 @@ export default async function Dashboard() {
               </svg>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-destructive">-$0.00</div>
+              <div className="text-2xl font-bold text-destructive">
+                {currencyFormatter.format(metrics.totalExpenses)}
+              </div>
               <p className="text-xs text-muted-foreground">
-                +0% from last month
+                Lifetime
               </p>
             </CardContent>
           </Card>
@@ -111,7 +122,9 @@ export default async function Dashboard() {
               </svg>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$0.00</div>
+              <div className="text-2xl font-bold">
+                {currencyFormatter.format(metrics.netProfit)}
+              </div>
             </CardContent>
           </Card>
         </div>
