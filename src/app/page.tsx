@@ -6,6 +6,7 @@ import { AccountSeeder } from '@/components/account-seeder'
 import { TransactionDialog } from '@/components/transaction-dialog'
 import { StatementUploader } from '@/components/statement-uploader'
 import { getDashboardMetrics } from '@/actions/dashboard'
+import Link from 'next/link'
 
 export default async function Dashboard() {
   const supabase = await createClient()
@@ -44,6 +45,13 @@ export default async function Dashboard() {
               <span>Upload Statement</span>
             </Button>
           </StatementUploader>
+
+          <Link href="/reports">
+            <Button className="h-24 w-full flex-col gap-2 bg-primary/10 text-primary hover:bg-primary/20" variant="outline">
+              <FileText className="h-6 w-6" />
+              <span>View Reports</span>
+            </Button>
+          </Link>
 
           <TransactionDialog>
             <Button className="h-24 flex-col gap-2" variant="outline">
