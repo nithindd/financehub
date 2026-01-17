@@ -133,7 +133,7 @@ export function StatementUploader({ children }: { children: React.ReactNode }) {
             <DialogTrigger asChild>
                 {children}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[95vw] sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Import Statement</DialogTitle>
                     <DialogDescription>
