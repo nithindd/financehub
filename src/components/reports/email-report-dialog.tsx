@@ -113,7 +113,7 @@ export function EmailReportDialog({
                 alert(`Email sent to ${email}!`)
                 onOpenChange(false)
             } else {
-                alert('Failed to send email.')
+                alert(`Failed to send email: ${result.error || 'Unknown error'}`)
             }
         } catch (error) {
             console.error(error)
