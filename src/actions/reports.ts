@@ -149,8 +149,12 @@ export async function sendReportEmail(formData: FormData) {
             }))
         )
 
+        const fromAddress = process.env.EMAIL_FROM || 'FinanceHub <onboarding@resend.dev>'
+        console.log(`[EMAIL DEBUG] Using Resend Key: ${resendApiKey ? '***Present***' : 'Missing'}`)
+        console.log(`[EMAIL DEBUG] Sending From: ${fromAddress}`)
+
         const { data, error } = await resend.emails.send({
-            from: 'FinanceHub <onboarding@resend.dev>', // Default testing domain
+            from: fromAddress, // Use env var if set, otherwise default
             to: [email],
             subject: `Financial Report: ${period}`,
             html: `
