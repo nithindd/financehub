@@ -126,12 +126,54 @@ export async function sendReportEmail(formData: FormData) {
 
     // In a real app, use Resend/SendGrid/AWS SES here
     console.log(`[EMAIL SERVICE] Sending report to ${email}`)
-    console.log(`[EMAIL SERVICE] Period: ${period}`)
-    console.log(`[EMAIL SERVICE] Attachments: ${files.length} files`)
-    console.log(`[EMAIL SERVICE] Include Receipts: ${includeReceipts}`)
 
-    // Simulate delay
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    // Check for API Key
+    const resendApiKey = process.env.RESEND_API_KEY
+    if (!resendApiKey) {
+        console.warn('RESEND_API_KEY not found. Email simulation only.')
+        // Simulate delay
+        await new Promise(resolve => setTimeout(resolve, 1500))
+        return { success: true, message: 'Simulation: Key missing' }
+    }
 
-    return { success: true }
+    try {
+        const { Resend } = await import('resend')
+        const resend = new Resend(resendApiKey)
+
+        // Convert files to attachments format for Resend
+        // Resend expects: { filename, content: Buffer }
+        const attachments = await Promise.all(
+            files.map(async (file) => ({
+                filename: file.name,
+                content: Buffer.from(await file.arrayBuffer())
+            }))
+        )
+
+        const { data, error } = await resend.emails.send({
+            from: 'FinanceHub <onboarding@resend.dev>', // Default testing domain
+            to: [email],
+            subject: `Financial Report: ${period}`,
+            html: `
+                <h1>Your Financial Report</h1>
+                <p>Attached is your requested report for the period: <strong>${period}</strong>.</p>
+                <p>Summary:</p>
+                <ul>
+                    <li>Included Receipt Images: ${includeReceipts ? 'Yes' : 'No'}</li>
+                    <li>Files Attached: ${files.length}</li>
+                </ul>
+            `,
+            attachments: attachments
+        })
+
+        if (error) {
+            console.error('Resend Error:', error)
+            return { error: error.message }
+        }
+
+        return { success: true }
+
+    } catch (err) {
+        console.error('Email Send Exception:', err)
+        return { error: 'Failed to send email' }
+    }
 }
