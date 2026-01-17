@@ -3,7 +3,7 @@
 import { ReportTransaction } from "@/actions/reports"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Pencil, Trash2 } from "lucide-react"
+import { Trash2 } from "lucide-react"
 import { deleteTransaction } from "@/actions/transactions"
 import { useRouter } from "next/navigation"
 
