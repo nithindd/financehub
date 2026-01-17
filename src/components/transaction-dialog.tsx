@@ -196,7 +196,7 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
             <DialogTrigger asChild>
                 {children}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[700px]">
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>New Transaction</DialogTitle>
                     <DialogDescription>
@@ -230,23 +230,23 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
                 </div>
 
                 <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="date" className="text-right">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                        <Label htmlFor="date" className="sm:text-right">
                             Date
                         </Label>
-                        <div className="col-span-3">
+                        <div className="sm:col-span-3">
                             <DatePicker date={date} setDate={setDate} />
                         </div>
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="description" className="text-right">
+                    <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                        <Label htmlFor="description" className="sm:text-right">
                             Description
                         </Label>
                         <Input
                             id="description"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            className="col-span-3"
+                            className="sm:col-span-3"
                         />
                     </div>
 
@@ -259,7 +259,7 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
                         </div>
 
                         {rows.map((row, index) => (
-                            <div key={index} className="flex gap-2 items-end">
+                            <div key={index} className="flex flex-col sm:flex-row gap-2 sm:items-end">
                                 <div className="flex-1">
                                     <Label className="text-xs">Account</Label>
                                     <Select value={row.accountId} onValueChange={(val) => updateRow(index, 'accountId', val)}>
@@ -273,7 +273,7 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div className="w-24">
+                                <div className="w-full sm:w-24">
                                     <Label className="text-xs">Type</Label>
                                     <Select value={row.type} onValueChange={(val: 'DEBIT' | 'CREDIT') => updateRow(index, 'type', val)}>
                                         <SelectTrigger>
@@ -285,7 +285,7 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div className="w-32">
+                                <div className="w-full sm:w-32">
                                     <Label className="text-xs">Amount</Label>
                                     <Input
                                         type="number"
@@ -295,7 +295,7 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
                                         onChange={(e) => updateRow(index, 'amount', e.target.value)}
                                     />
                                 </div>
-                                <Button variant="ghost" size="icon" onClick={() => removeRow(index)} disabled={rows.length <= 2}>
+                                <Button variant="ghost" size="icon" onClick={() => removeRow(index)} disabled={rows.length <= 2} className="self-end sm:self-auto">
                                     <Trash2 className="h-4 w-4 text-muted-foreground" />
                                 </Button>
                             </div>
