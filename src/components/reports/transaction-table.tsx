@@ -71,24 +71,14 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                                 {currencyFormatter.format(tx.amount)}
                             </td>
                             <td className="p-4 align-middle text-right">
-                                <div className="flex justify-end gap-2">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8"
-                                        onClick={() => router.push(`/reports/edit/${tx.id}`)}
-                                    >
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 text-destructive hover:text-destructive"
-                                        onClick={() => handleDelete(tx.id, tx.description)}
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                </div>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-destructive hover:text-destructive"
+                                    onClick={() => handleDelete(tx.id, tx.description)}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
                             </td>
                         </tr>
                     ))}
