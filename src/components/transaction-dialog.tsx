@@ -142,9 +142,13 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
                 const { date: dateStr, vendor, items, totalAmount, tax, tip } = result.data
 
                 if (dateStr) {
-                    const parsedDate = new Date(dateStr)
-                    if (!isNaN(parsedDate.getTime())) {
-                        setDate(parsedDate)
+                    // Manually parse YYYY-MM-DD to ensure local time is used (avoiding UTC offset issues)
+                    const [y, m, d] = dateStr.split('-').map(Number)
+                    if (y && m && d) {
+                        const localDate = new Date(y, m - 1, d)
+                        if (!isNaN(localDate.getTime())) {
+                            setDate(localDate)
+                        }
                     }
                 }
                 if (vendor) setDescription(vendor)
