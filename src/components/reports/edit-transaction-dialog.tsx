@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { getTransactionById, updateTransaction } from '@/actions/transactions'
 import { getAccounts, type Account } from '@/actions/accounts'
 import { DatePicker } from '@/components/ui/date-picker'
-import { Loader2, Plus, X } from 'lucide-react'
+import { Loader2, Plus, X, Paperclip } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 interface EditTransactionDialogProps {
@@ -26,6 +26,7 @@ export function EditTransactionDialog({ transactionId, open, onOpenChange }: Edi
 
     const [date, setDate] = React.useState<Date>(new Date())
     const [description, setDescription] = React.useState('')
+    const [evidencePath, setEvidencePath] = React.useState<string | null>(null)
     const [entries, setEntries] = React.useState<Array<{
         accountId: string
         type: 'DEBIT' | 'CREDIT'
@@ -49,6 +50,7 @@ export function EditTransactionDialog({ transactionId, open, onOpenChange }: Edi
         if (txData) {
             setDate(new Date(txData.date))
             setDescription(txData.description)
+            setEvidencePath(txData.evidence_path)
             setEntries(txData.journal_entries.map((e: any) => ({
                 accountId: e.account_id,
                 type: e.entry_type,
@@ -79,7 +81,8 @@ export function EditTransactionDialog({ transactionId, open, onOpenChange }: Edi
                 accountId: e.accountId,
                 type: e.type,
                 amount: parseFloat(e.amount)
-            }))
+            })),
+            evidencePath: evidencePath || undefined
         })
         setSaving(false)
 
@@ -139,6 +142,20 @@ export function EditTransactionDialog({ transactionId, open, onOpenChange }: Edi
                                 required
                             />
                         </div>
+
+                        {evidencePath && (
+                            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                                <div className="sm:text-right text-xs text-muted-foreground">Receipt</div>
+                                <div className="sm:col-span-3">
+                                    <Button variant="outline" size="sm" asChild className="gap-2">
+                                        <a href={evidencePath} target="_blank" rel="noopener noreferrer">
+                                            <Paperclip className="h-4 w-4" />
+                                            View Linked File
+                                        </a>
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="space-y-2">
                             <Label>Journal Entries</Label>

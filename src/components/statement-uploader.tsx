@@ -26,6 +26,7 @@ import Papa from 'papaparse'
 import { createTransaction } from '@/actions/transactions'
 import { getAccounts, type Account } from '@/actions/accounts'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/utils/supabase/client'
 
 export function StatementUploader({ children }: { children: React.ReactNode }) {
     const [open, setOpen] = useState(false)
@@ -34,6 +35,7 @@ export function StatementUploader({ children }: { children: React.ReactNode }) {
     const [rawData, setRawData] = useState<any[]>([])
     const [headers, setHeaders] = useState<string[]>([])
     const [accounts, setAccounts] = useState<Account[]>([])
+    const [evidencePath, setEvidencePath] = useState<string | null>(null)
 
     // Mapping State
     const [targetAccountId, setTargetAccountId] = useState('')
@@ -54,7 +56,35 @@ export function StatementUploader({ children }: { children: React.ReactNode }) {
 
         setLoading(true)
 
-        // Check if PDF
+        // 1. Upload to Supabase Storage
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) {
+            alert("Please log in to upload files.")
+            setLoading(false)
+            return
+        }
+
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${user.id}/statements/${Date.now()}.${fileExt}`
+
+        console.log("Client: Uploading statement to Supabase Storage...", fileName)
+        const { error: uploadError } = await supabase.storage
+            .from('evidence')
+            .upload(fileName, file)
+
+        if (uploadError) {
+            console.error('Storage Upload Error:', uploadError)
+            alert(`Failed to upload statement to storage: ${uploadError.message}`)
+            setLoading(false)
+            return
+        }
+
+        const publicUrl = supabase.storage.from('evidence').getPublicUrl(fileName).data.publicUrl
+        setEvidencePath(publicUrl)
+
+        // 2. Parse file
         if (file.type === 'application/pdf') {
             try {
                 const arrayBuffer = await file.arrayBuffer()
@@ -137,7 +167,8 @@ export function StatementUploader({ children }: { children: React.ReactNode }) {
                     entries: [
                         { accountId: targetAccountId, type: isDebit ? 'CREDIT' : 'DEBIT', amount: amount },
                         { accountId: expenseAcc?.id || '', type: isDebit ? 'DEBIT' : 'CREDIT', amount: amount }
-                    ]
+                    ],
+                    evidencePath: evidencePath || undefined
                 })
 
                 if (result.success) successCount++
@@ -151,6 +182,7 @@ export function StatementUploader({ children }: { children: React.ReactNode }) {
         alert(`Import Complete! Successfully created ${successCount} transactions. Errors: ${errorCount}`)
         setOpen(false)
         setRawData([])
+        setEvidencePath(null)
     }
 
     const isMappingValid = targetAccountId && dateCol && descCol && amountCol

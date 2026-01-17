@@ -3,7 +3,7 @@
 import { ReportTransaction } from "@/actions/reports"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Pencil, Trash2 } from "lucide-react"
+import { Pencil, Trash2, Paperclip } from "lucide-react"
 import { deleteTransaction } from "@/actions/transactions"
 import { EditTransactionDialog } from "./edit-transaction-dialog"
 import { useRouter } from "next/navigation"
@@ -52,6 +52,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                             <th className="h-12 px-4 font-medium text-muted-foreground hidden md:table-cell">Category</th>
                             <th className="h-12 px-4 font-medium text-muted-foreground hidden md:table-cell">Type</th>
                             <th className="h-12 px-4 font-medium text-muted-foreground text-right">Amount</th>
+                            <th className="h-12 px-4 font-medium text-muted-foreground text-center">Receipt</th>
                             <th className="h-12 px-4 font-medium text-muted-foreground text-right">Actions</th>
                         </tr>
                     </thead>
@@ -74,6 +75,15 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                                 </td>
                                 <td className="p-4 align-middle text-right font-mono">
                                     {currencyFormatter.format(tx.amount)}
+                                </td>
+                                <td className="p-4 align-middle text-center">
+                                    {tx.evidencePath ? (
+                                        <a href={tx.evidencePath} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80" title="View Evidence">
+                                            <Paperclip className="h-4 w-4 mx-auto" />
+                                        </a>
+                                    ) : (
+                                        <span className="text-muted-foreground/30 text-xs">None</span>
+                                    )}
                                 </td>
                                 <td className="p-4 align-middle text-right">
                                     <div className="flex justify-end gap-2">

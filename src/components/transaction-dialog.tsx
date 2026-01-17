@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Plus, Trash2, Loader2, Upload } from "lucide-react"
+import { Plus, Trash2, Loader2, Upload, Check } from "lucide-react"
 import { DatePicker } from "@/components/ui/date-picker"
 import {
     Select,
@@ -26,6 +26,7 @@ import { getAccounts, type Account } from '@/actions/accounts'
 import { createTransaction } from '@/actions/transactions'
 import { processInvoice } from '@/actions/ocr'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/utils/supabase/client'
 
 interface JournalEntryRow {
     accountId: string
@@ -44,6 +45,7 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
     const [accounts, setAccounts] = useState<Account[]>([])
     const [loading, setLoading] = useState(false)
     const [ocrLoading, setOcrLoading] = useState(false)
+    const [evidencePath, setEvidencePath] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     // Fetch accounts on open
@@ -84,6 +86,36 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
         e.target.value = ''
 
         setOcrLoading(true)
+
+        // 1. Upload to Supabase Storage
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+
+        if (!user) {
+            alert("Please log in to upload files.")
+            setOcrLoading(false)
+            return
+        }
+
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${user.id}/${Date.now()}.${fileExt}`
+
+        console.log("Client: Uploading to Supabase Storage...", fileName)
+        const { error: uploadError } = await supabase.storage
+            .from('evidence')
+            .upload(fileName, file)
+
+        if (uploadError) {
+            console.error('Storage Upload Error:', uploadError)
+            alert(`Failed to upload file to storage: ${uploadError.message}`)
+            setOcrLoading(false)
+            return
+        }
+
+        const publicUrl = supabase.storage.from('evidence').getPublicUrl(fileName).data.publicUrl
+        setEvidencePath(publicUrl)
+
+        // 2. Process with OCR
         const formData = new FormData()
         formData.append('file', file)
 
@@ -173,7 +205,8 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
                 accountId: r.accountId,
                 type: r.type,
                 amount: parseFloat(r.amount)
-            }))
+            })),
+            evidencePath: evidencePath || undefined
         })
         setLoading(false)
 
@@ -184,6 +217,7 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
             // Reset form
             setDescription('')
             setDate(new Date())
+            setEvidencePath(null)
             setRows([
                 { accountId: '', type: 'DEBIT', amount: '' },
                 { accountId: '', type: 'CREDIT', amount: '' }
@@ -228,6 +262,12 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
                         {ocrLoading ? "Scanning Invoice..." : "Auto-fill from Invoice Image"}
                     </Button>
                 </div>
+                {evidencePath && (
+                    <div className="flex items-center justify-center gap-2 py-1 text-xs text-success bg-success/5 border-b">
+                        <Check className="h-3 w-3" />
+                        File attached and will be linked to this transaction
+                    </div>
+                )}
 
                 <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
