@@ -3,7 +3,7 @@
 import { ReportTransaction } from "@/actions/reports"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Pencil, Trash2, Paperclip } from "lucide-react"
+import { Pencil, Trash2, Paperclip, Layers } from "lucide-react"
 import { deleteTransaction } from "@/actions/transactions"
 import { EditTransactionDialog } from "./edit-transaction-dialog"
 import { useRouter } from "next/navigation"
@@ -76,7 +76,12 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                                         {new Date(tx.date).toLocaleDateString()}
                                     </td>
                                     <td className="p-4 align-middle font-medium">
-                                        {tx.description}
+                                        <div className="flex items-center gap-2">
+                                            {tx.description}
+                                            {tx.parentId && (
+                                                <Layers className="h-3 w-3 text-muted-foreground/50" />
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="p-4 align-middle hidden md:table-cell">
                                         <span className="text-muted-foreground">{tx.category}</span>

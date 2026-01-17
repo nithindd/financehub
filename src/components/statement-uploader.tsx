@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select"
 import { FileText, Upload, Loader2, Check, AlertCircle } from "lucide-react"
 import Papa from 'papaparse'
-import { createTransaction } from '@/actions/transactions'
+import { createTransaction, createTransactionBatch } from '@/actions/transactions'
 import { getAccounts, type Account } from '@/actions/accounts'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/utils/supabase/client'
@@ -135,54 +135,56 @@ export function StatementUploader({ children }: { children: React.ReactNode }) {
         }
 
         setImporting(true)
-        let successCount = 0
-        let errorCount = 0
 
         // Find Expense account for balancing
         const expenseAcc = accounts.find(a => a.type === 'EXPENSE')
+        const batch: any[] = []
 
         for (const row of rawData) {
             const dateStr = row[dateCol]
             const desc = row[descCol]
             const rawAmount = row[amountCol]
 
-            // Basic cleaning
-            const amount = Math.abs(parseFloat(rawAmount.replace(/[^0-9.-]+/g, "")))
-            const isDebit = parseFloat(rawAmount.replace(/[^0-9.-]+/g, "")) < 0
+            if (!dateStr || !rawAmount) continue
 
-            if (!dateStr || isNaN(amount)) {
-                errorCount++
-                continue
-            }
+            const amount = Math.abs(parseFloat(String(rawAmount).replace(/[^0-9.-]+/g, "")))
+            const isDebit = parseFloat(String(rawAmount).replace(/[^0-9.-]+/g, "")) < 0
 
-            try {
-                // Determine splits: 
-                // If amount is negative (debit in bank sense? or expense?), we map accordingly.
-                // Usually banks: - is Money Out (Expense), + is Money In (Income/Transfer)
-                // We'll simplify: All rows are transactions between the target account and the 'Office Supplies' or similar.
+            if (isNaN(amount)) continue
 
-                const result = await createTransaction({
-                    date: new Date(dateStr),
-                    description: desc,
-                    entries: [
-                        { accountId: targetAccountId, type: isDebit ? 'CREDIT' : 'DEBIT', amount: amount },
-                        { accountId: expenseAcc?.id || '', type: isDebit ? 'DEBIT' : 'CREDIT', amount: amount }
-                    ],
-                    evidencePath: evidencePath || undefined
-                })
-
-                if (result.success) successCount++
-                else errorCount++
-            } catch (e) {
-                errorCount++
-            }
+            batch.push({
+                date: new Date(dateStr),
+                description: desc,
+                entries: [
+                    { accountId: targetAccountId, type: isDebit ? 'CREDIT' : 'DEBIT', amount: amount },
+                    { accountId: expenseAcc?.id || '', type: isDebit ? 'DEBIT' : 'CREDIT', amount: amount }
+                ],
+                // Only the first transaction carries the evidence link for the whole batch
+                evidencePath: batch.length === 0 ? (evidencePath || undefined) : undefined
+            })
         }
 
-        setImporting(false)
-        alert(`Import Complete! Successfully created ${successCount} transactions. Errors: ${errorCount}`)
-        setOpen(false)
-        setRawData([])
-        setEvidencePath(null)
+        if (batch.length === 0) {
+            alert("No valid transactions found to import.")
+            setImporting(false)
+            return
+        }
+
+        try {
+            const result = await createTransactionBatch(batch)
+            if (result.success) {
+                alert(`Import Complete! Created ${batch.length} transactions grouped under a single master.`)
+                setOpen(false)
+                setRawData([])
+                setEvidencePath(null)
+            } else {
+                alert(`Import Error: ${result.error}`)
+            }
+        } catch (e: any) {
+            alert(`Import Exception: ${e.message}`)
+        } finally {
+            setImporting(false)
+        }
     }
 
     const isMappingValid = targetAccountId && dateCol && descCol && amountCol

@@ -14,6 +14,7 @@ export interface TransactionInput {
     description: string
     entries: JournalEntryInput[]
     evidencePath?: string
+    parentId?: string
 }
 
 export async function createTransaction(input: TransactionInput) {
@@ -41,7 +42,8 @@ export async function createTransaction(input: TransactionInput) {
             date: input.date.toISOString(),
             description: input.description,
             user_id: user.id,
-            evidence_path: input.evidencePath
+            evidence_path: input.evidencePath,
+            parent_id: input.parentId
         })
         .select()
         .single()
@@ -69,7 +71,35 @@ export async function createTransaction(input: TransactionInput) {
     }
 
     revalidatePath('/')
-    return { success: true }
+    return { success: true, id: transaction.id }
+}
+
+/**
+ * Creates multiple transactions. The first one is treated as the "Master"
+ * and its ID is used as parent_id for subsequent transactions if they don't have one.
+ */
+export async function createTransactionBatch(inputs: TransactionInput[]) {
+    if (inputs.length === 0) return { error: 'No transactions provided' }
+
+    // 1. Create the Master Transaction
+    const masterResult = await createTransaction(inputs[0])
+    if (masterResult.error || !masterResult.id) return masterResult
+
+    const masterId = masterResult.id
+
+    // 2. Create detailed sub-transactions
+    // Skip the first one as it's already created
+    for (let i = 1; i < inputs.length; i++) {
+        const childInput = { ...inputs[i], parentId: masterId }
+        const result = await createTransaction(childInput)
+        if (result.error) {
+            console.error(`Failed to create child transaction ${i}`, result.error)
+            // Continue with others or return? Let's continue for now.
+        }
+    }
+
+    revalidatePath('/')
+    return { success: true, masterId }
 }
 
 export async function updateTransaction(id: string, input: TransactionInput) {
@@ -91,7 +121,8 @@ export async function updateTransaction(id: string, input: TransactionInput) {
         .update({
             date: input.date.toISOString(),
             description: input.description,
-            evidence_path: input.evidencePath
+            evidence_path: input.evidencePath,
+            parent_id: input.parentId
         })
         .eq('id', id)
         .eq('user_id', user.id)

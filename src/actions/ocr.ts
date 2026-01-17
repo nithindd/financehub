@@ -4,7 +4,7 @@ import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 
-const GEN_AI_MODEL = "gemini-3-flash-preview";
+const GEN_AI_MODEL = "gemini-1.5-flash";
 
 export async function processInvoice(formData: FormData) {
     const file = formData.get('file') as File;
@@ -39,16 +39,28 @@ export async function processInvoice(formData: FormData) {
                     type: SchemaType.OBJECT,
                     properties: {
                         date: { type: SchemaType.STRING, description: "Date in YYYY-MM-DD format" },
-                        description: { type: SchemaType.STRING, description: "Vendor name and brief summary of items" },
-                        totalAmount: { type: SchemaType.NUMBER, description: "Total amount on the invoice" }
+                        vendor: { type: SchemaType.STRING, description: "Name of the store or vendor" },
+                        totalAmount: { type: SchemaType.NUMBER, description: "Total amount on the invoice" },
+                        items: {
+                            type: SchemaType.ARRAY,
+                            description: "List of individual line items, products, or charges",
+                            items: {
+                                type: SchemaType.OBJECT,
+                                properties: {
+                                    description: { type: SchemaType.STRING, description: "Name/description of the product or service" },
+                                    amount: { type: SchemaType.NUMBER, description: "Price/amount for this item" }
+                                },
+                                required: ["description", "amount"]
+                            }
+                        }
                     },
-                    required: ["date", "description", "totalAmount"]
+                    required: ["date", "vendor", "totalAmount", "items"]
                 }
             }
         });
 
 
-        const prompt = "Analyze this invoice/receipt image and extract metadata.";
+        const prompt = "Analyze this invoice/receipt image and extract metadata. If you find multiple line items, list them in the 'items' array.";
 
         const result = await model.generateContent([
             prompt,
@@ -70,4 +82,3 @@ export async function processInvoice(formData: FormData) {
         return { error: error.message || 'Failed to process image' };
     }
 }
-

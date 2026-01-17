@@ -17,6 +17,7 @@ export interface ReportTransaction {
     type: 'INCOME' | 'EXPENSE' | 'TRANSFER'
     category: string // Account name
     evidencePath?: string
+    parentId?: string
     journalEntries: JournalEntryDetail[]
 }
 
@@ -53,6 +54,7 @@ export async function getFinancialReport(startDate: Date, endDate: Date): Promis
             date,
             description,
             evidence_path,
+            parent_id,
             journal_entries (
                 amount,
                 entry_type,
@@ -112,6 +114,7 @@ export async function getFinancialReport(startDate: Date, endDate: Date): Promis
             type: type,
             category: category,
             evidencePath: tx.evidence_path,
+            parentId: tx.parent_id,
             journalEntries: tx.journal_entries.map((e: any) => ({
                 amount: parseFloat(e.amount),
                 type: e.entry_type as 'DEBIT' | 'CREDIT',
