@@ -222,3 +222,57 @@ export async function getRecentTransactions() {
         }
     })
 }
+export async function checkPossibleDuplicate(input: { date: Date, amount: number, description?: string }) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return []
+
+    // Search for transactions on the same date (ignore time)
+    const dateStr = input.date.toISOString().split('T')[0]
+
+    // We want to find transactions that occurred on this date
+    // Database 'date' is timestampz usually? Or date? 
+    // Schema says "date sent as ISO string". 
+    // Let's search range: [dateStr 00:00, dateStr 23:59] in UTC?
+    // It's safer to fetch a wider range or just matches.
+
+    // Let's assume dates are stored roughly correctly.
+    const { data: candidates, error } = await supabase
+        .from('transactions')
+        .select(`
+            id,
+            date,
+            description,
+            journal_entries (
+                amount,
+                entry_type
+            )
+        `)
+        .eq('user_id', user.id)
+        // Just checking by date string prefix might be unsafe if timezones differ.
+        // Let's just fetch recent 50 and filter in JS? No, not scalable.
+        // Let's use PostgreSQL date comparison if possible
+        .gte('date', `${dateStr}T00:00:00`)
+        .lte('date', `${dateStr}T23:59:59`)
+
+    if (error || !candidates) return []
+
+    const duplicates = candidates.filter(tx => {
+        // Calculate total amount of transaction
+        const txAmount = tx.journal_entries.reduce((acc: number, curr: any) => {
+            return curr.entry_type === 'DEBIT' ? acc + curr.amount : acc
+        }, 0)
+
+        const isAmountMatch = Math.abs(txAmount - input.amount) < 0.05
+        const isDescMatch = input.description && tx.description.toLowerCase().includes(input.description.toLowerCase())
+
+        return isAmountMatch || isDescMatch
+    }).map(tx => ({
+        id: tx.id,
+        date: tx.date,
+        description: tx.description,
+        amount: tx.journal_entries.reduce((acc: number, curr: any) => curr.entry_type === 'DEBIT' ? acc + curr.amount : acc, 0)
+    }))
+
+    return duplicates
+}

@@ -23,7 +23,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { getAccounts, type Account } from '@/actions/accounts'
-import { createTransaction, createTransactionBatch } from '@/actions/transactions'
+import { createTransaction, createTransactionBatch, checkPossibleDuplicate } from '@/actions/transactions'
 import { processInvoice } from '@/actions/ocr'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/utils/supabase/client'
@@ -141,17 +141,8 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
             if (result.data) {
                 const { date: dateStr, vendor, items, totalAmount, tax, tip } = result.data
 
-                if (dateStr) {
-                    // Manually parse YYYY-MM-DD to ensure local time is used (avoiding UTC offset issues)
-                    const [y, m, d] = dateStr.split('-').map(Number)
-                    if (y && m && d) {
-                        const localDate = new Date(y, m - 1, d)
-                        if (!isNaN(localDate.getTime())) {
-                            setDate(localDate)
-                        }
-                    }
-                }
                 if (vendor) setDescription(vendor)
+
 
                 // Find potential accounts
                 const expenseAcc = accounts.find(a => a.type === 'EXPENSE')
@@ -159,8 +150,9 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
 
                 if (assetAcc) setBankAccountId(assetAcc.id)
 
+                let calcLineItems: LineItem[] = []
                 if (items && Array.isArray(items) && items.length > 0) {
-                    const newItems = items.map((item: any) => ({
+                    calcLineItems = items.map((item: any) => ({
                         description: item.description,
                         amount: typeof item.amount === 'string' ? parseFloat(item.amount) : item.amount,
                         accountId: expenseAcc?.id || ''
@@ -168,47 +160,67 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
 
                     // Add Tax if present
                     if (tax && typeof tax === 'number' && tax > 0) {
-                        newItems.push({
+                        calcLineItems.push({
                             description: "Tax",
                             amount: tax,
-                            accountId: expenseAcc?.id || '' // User should probably categorize this specifically
+                            accountId: expenseAcc?.id || ''
                         })
                     }
 
                     // Add Tip if present
                     if (tip && typeof tip === 'number' && tip > 0) {
-                        newItems.push({
+                        calcLineItems.push({
                             description: "Tip",
                             amount: tip,
                             accountId: expenseAcc?.id || ''
                         })
                     }
 
-                    setLineItems(newItems)
+                    setLineItems(calcLineItems)
                     // Clear simple rows if we have line items
                     setRows([])
                 } else if (totalAmount && accounts.length > 0) {
-                    // Fallback to simple rows if no line items found
+                    // Fallback to simple rows logic
                     const amountValue = typeof totalAmount === 'string' ? parseFloat(totalAmount) : totalAmount
-                    if (isNaN(amountValue)) return
-
-                    const amountStr = amountValue.toFixed(2)
-
-                    const newRows: JournalEntryRow[] = []
-                    if (expenseAcc) {
-                        newRows.push({ accountId: expenseAcc.id, type: 'DEBIT', amount: amountStr })
+                    if (!isNaN(amountValue)) {
+                        const amountStr = amountValue.toFixed(2)
+                        const newRows: JournalEntryRow[] = []
+                        if (expenseAcc) newRows.push({ accountId: expenseAcc.id, type: 'DEBIT', amount: amountStr })
+                        if (assetAcc) newRows.push({ accountId: assetAcc.id, type: 'CREDIT', amount: amountStr })
+                        if (newRows.length > 0) setRows(newRows)
                     }
-                    if (assetAcc) {
-                        newRows.push({ accountId: assetAcc.id, type: 'CREDIT', amount: amountStr })
-                    }
+                }
 
-                    if (newRows.length === 2) {
-                        setRows(newRows)
-                    } else if (newRows.length > 0) {
-                        const updatedRows = [...rows]
-                        if (expenseAcc) updatedRows[0] = { accountId: expenseAcc.id, type: 'DEBIT', amount: amountStr }
-                        if (assetAcc) updatedRows[1] = { accountId: assetAcc.id, type: 'CREDIT', amount: amountStr }
-                        setRows(updatedRows)
+                // Parse Date and Check Duplicates
+                if (dateStr) {
+                    // NOON Fix for Timezones
+                    const [y, m, d] = dateStr.split('-').map(Number)
+                    if (y && m && d) {
+                        const localDate = new Date(y, m - 1, d, 12, 0, 0)
+                        if (!isNaN(localDate.getTime())) {
+                            setDate(localDate)
+
+                            // Check for duplicates
+                            const checkAmount = totalAmount || (calcLineItems.length > 0 ? calcLineItems.reduce((sum, i) => sum + i.amount, 0) : 0)
+
+                            if (checkAmount > 0) {
+                                checkPossibleDuplicate({
+                                    date: localDate,
+                                    amount: typeof checkAmount === 'string' ? parseFloat(checkAmount) : checkAmount,
+                                    description: vendor || ''
+                                }).then(dupes => {
+                                    if (dupes.length > 0) {
+                                        const msg = `Possible Duplicate Detected!\n\nFound ${dupes.length} similar transaction(s) on ${dateStr}:\n` +
+                                            dupes.map(d => `- ${d.description} ($${d.amount})`).join('\n') +
+                                            `\n\nDo you want to continue?`
+                                        if (!confirm(msg)) {
+                                            resetForm()
+                                            setOpen(false)
+                                        }
+                                    }
+                                })
+                            }
+                        }
                     }
                 }
             }
