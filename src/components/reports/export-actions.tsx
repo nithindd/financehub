@@ -6,15 +6,17 @@ import { Download, Mail } from "lucide-react"
 import { jsPDF } from "jspdf"
 import Papa from "papaparse"
 import { ReportTransaction } from "@/actions/reports"
+import { EmailReportDialog } from "./email-report-dialog"
 
 interface ExportActionsProps {
     data: ReportTransaction[]
+    summary: any
     startDate: Date
     endDate: Date
-    onEmailClick: () => void
+    defaultEmail?: string
 }
 
-export function ExportActions({ data, startDate, endDate, onEmailClick }: ExportActionsProps) {
+export function ExportActions({ data, summary, startDate, endDate, defaultEmail }: ExportActionsProps) {
     const handleDownloadCSV = () => {
         const csv = Papa.unparse(data.map(t => ({
             Date: new Date(t.date).toLocaleDateString(),
@@ -73,20 +75,7 @@ export function ExportActions({ data, startDate, endDate, onEmailClick }: Export
         doc.save(`financial_report_${startDate.toISOString().split('T')[0]}.pdf`)
     }
 
-    const [isEmailing, setIsEmailing] = React.useState(false)
-
-    const handleEmail = async () => {
-        setIsEmailing(true)
-        try {
-            await onEmailClick()
-            alert("Report sent! (Check console for simulation)")
-        } catch (error) {
-            console.error(error)
-            alert("Failed to send report")
-        } finally {
-            setIsEmailing(false)
-        }
-    }
+    const [emailDialogOpen, setEmailDialogOpen] = React.useState(false)
 
     return (
         <div className="flex gap-2">
@@ -96,10 +85,19 @@ export function ExportActions({ data, startDate, endDate, onEmailClick }: Export
             <Button variant="outline" size="sm" onClick={handleDownloadPDF}>
                 <Download className="mr-2 h-4 w-4" /> PDF
             </Button>
-            <Button variant="default" size="sm" onClick={handleEmail} disabled={isEmailing}>
-                <Mail className="mr-2 h-4 w-4" />
-                {isEmailing ? "Sending..." : "Email Report"}
+            <Button variant="default" size="sm" onClick={() => setEmailDialogOpen(true)}>
+                <Mail className="mr-2 h-4 w-4" /> Email Report
             </Button>
+
+            <EmailReportDialog
+                open={emailDialogOpen}
+                onOpenChange={setEmailDialogOpen}
+                data={data}
+                summary={undefined} // passed down or calculated? It's not in props currently. will fix 
+                startDate={startDate}
+                endDate={endDate}
+                defaultEmail={undefined} // Need to pass this in props
+            />
         </div>
     )
 }

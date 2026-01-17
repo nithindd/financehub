@@ -4,7 +4,6 @@ import { ReportFilters } from '@/components/reports/report-filters'
 import { ReportSummary } from '@/components/reports/report-summary'
 import { TransactionTable } from '@/components/reports/transaction-table'
 import { ExportActions } from '@/components/reports/export-actions'
-import { sendReportEmail } from '@/actions/reports'
 import { startOfMonth, endOfMonth } from 'date-fns'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -44,16 +43,7 @@ export default async function ReportsPage({
         return <div className="p-8 text-red-600">Error: {reportData.error}</div>
     }
 
-    // Email action handler (this needs to be client-side action or wrapped, 
-    // but for simplicity we pass a server action reference to client component if possible, 
-    // or just make a small client wrapper. 
-    // Actually, passing server action to client component is fine in Next.js)
-    async function handleEmail() {
-        'use server'
-        if (user && user.email) {
-            await sendReportEmail(user.email, reportData)
-        }
-    }
+
 
     return (
         <div className="flex min-h-screen flex-col bg-muted/20">
@@ -76,9 +66,10 @@ export default async function ReportsPage({
                     <h2 className="text-lg font-semibold">Transactions</h2>
                     <ExportActions
                         data={reportData.transactions}
+                        summary={reportData.summary}
                         startDate={startDate}
                         endDate={endDate}
-                        onEmailClick={handleEmail}
+                        defaultEmail={user?.email}
                     />
                 </div>
 

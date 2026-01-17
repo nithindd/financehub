@@ -117,12 +117,21 @@ export async function getFinancialReport(startDate: Date, endDate: Date): Promis
     }
 }
 
-export async function sendReportEmail(email: string, reportData: any) {
+export async function sendReportEmail(formData: FormData) {
+    const email = formData.get('email') as string
+    const summary = formData.get('summary') as string
+    const period = formData.get('period') as string
+    const includeReceipts = formData.get('includeReceipts') === 'true'
+    const files = formData.getAll('files') as File[]
+
     // In a real app, use Resend/SendGrid/AWS SES here
-    console.log(`[EMAIL SERVICE] Sending report to ${email}`, reportData.summary)
+    console.log(`[EMAIL SERVICE] Sending report to ${email}`)
+    console.log(`[EMAIL SERVICE] Period: ${period}`)
+    console.log(`[EMAIL SERVICE] Attachments: ${files.length} files`)
+    console.log(`[EMAIL SERVICE] Include Receipts: ${includeReceipts}`)
 
     // Simulate delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await new Promise(resolve => setTimeout(resolve, 1500))
 
     return { success: true }
 }
