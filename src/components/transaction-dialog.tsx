@@ -139,7 +139,7 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
             }
 
             if (result.data) {
-                const { date: dateStr, vendor, items, totalAmount } = result.data
+                const { date: dateStr, vendor, items, totalAmount, tax, tip } = result.data
 
                 if (dateStr) {
                     const parsedDate = new Date(dateStr)
@@ -156,11 +156,31 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
                 if (assetAcc) setBankAccountId(assetAcc.id)
 
                 if (items && Array.isArray(items) && items.length > 0) {
-                    setLineItems(items.map((item: any) => ({
+                    const newItems = items.map((item: any) => ({
                         description: item.description,
                         amount: typeof item.amount === 'string' ? parseFloat(item.amount) : item.amount,
                         accountId: expenseAcc?.id || ''
-                    })))
+                    }))
+
+                    // Add Tax if present
+                    if (tax && typeof tax === 'number' && tax > 0) {
+                        newItems.push({
+                            description: "Tax",
+                            amount: tax,
+                            accountId: expenseAcc?.id || '' // User should probably categorize this specifically
+                        })
+                    }
+
+                    // Add Tip if present
+                    if (tip && typeof tip === 'number' && tip > 0) {
+                        newItems.push({
+                            description: "Tip",
+                            amount: tip,
+                            accountId: expenseAcc?.id || ''
+                        })
+                    }
+
+                    setLineItems(newItems)
                     // Clear simple rows if we have line items
                     setRows([])
                 } else if (totalAmount && accounts.length > 0) {

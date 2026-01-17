@@ -41,6 +41,8 @@ export async function processInvoice(formData: FormData) {
                         date: { type: SchemaType.STRING, description: "Date in YYYY-MM-DD format" },
                         vendor: { type: SchemaType.STRING, description: "Name of the store or vendor" },
                         totalAmount: { type: SchemaType.NUMBER, description: "Total amount on the invoice" },
+                        tax: { type: SchemaType.NUMBER, description: "Total tax amount found on invoice" },
+                        tip: { type: SchemaType.NUMBER, description: "Tip/gratuity amount if present" },
                         items: {
                             type: SchemaType.ARRAY,
                             description: "List of individual line items, products, or charges",
@@ -54,13 +56,13 @@ export async function processInvoice(formData: FormData) {
                             }
                         }
                     },
-                    required: ["date", "vendor", "totalAmount", "items"]
+                    required: ["date", "vendor", "totalAmount", "tax", "items"]
                 }
             }
         });
 
 
-        const prompt = "Analyze this invoice/receipt image and extract metadata. If you find multiple line items, list them in the 'items' array.";
+        const prompt = "Analyze this invoice/receipt image and extract metadata. Extract the total tax amount explicitly. If you find multiple line items, list them in the 'items' array. Do not include tax in individual item prices unless it's not listed separately.";
 
         const result = await model.generateContent([
             prompt,
