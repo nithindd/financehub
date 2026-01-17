@@ -6,7 +6,7 @@ A professional double-entry accounting system with AI-powered invoice scanning, 
 
 ## 🏗️ Architecture
 
-![FinanceHub Architecture](C:/Users/nithi/.gemini/antigravity/brain/f183578e-0b2d-4ba2-b5f4-5e4d70d2278d/financehub_architecture_1768683984833.png)
+![FinanceHub Architecture](./public/architecture.png)
 
 The application follows a modern serverless architecture:
 - **Frontend**: Next.js 15 with React Server Components and Client Components
