@@ -24,14 +24,20 @@ export default async function Dashboard() {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Button className="h-24 flex-col gap-2 bg-primary/10 text-primary hover:bg-primary/20" variant="outline">
-            <Camera className="h-6 w-6" />
-            <span>Scan Invoice</span>
-          </Button>
-          <Button className="h-24 flex-col gap-2 bg-primary/10 text-primary hover:bg-primary/20" variant="outline">
-            <FileText className="h-6 w-6" />
-            <span>Upload Statement</span>
-          </Button>
+          <TransactionDialog defaultOpenOcr={true}>
+            <Button className="h-24 flex-col gap-2 bg-primary/10 text-primary hover:bg-primary/20" variant="outline">
+              <Camera className="h-6 w-6" />
+              <span>Scan Invoice</span>
+            </Button>
+          </TransactionDialog>
+
+          <StatementUploader>
+            <Button className="h-24 flex-col gap-2 bg-primary/10 text-primary hover:bg-primary/20" variant="outline">
+              <FileText className="h-6 w-6" />
+              <span>Upload Statement</span>
+            </Button>
+          </StatementUploader>
+
           <TransactionDialog>
             <Button className="h-24 flex-col gap-2" variant="outline">
               <PlusCircle className="h-6 w-6" />

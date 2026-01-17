@@ -33,7 +33,7 @@ interface JournalEntryRow {
     amount: string
 }
 
-export function TransactionDialog({ children }: { children: React.ReactNode }) {
+export function TransactionDialog({ children, defaultOpenOcr = false }: { children: React.ReactNode, defaultOpenOcr?: boolean }) {
     const [open, setOpen] = useState(false)
     const [date, setDate] = useState<Date | undefined>(new Date())
     const [description, setDescription] = useState('')
@@ -47,11 +47,18 @@ export function TransactionDialog({ children }: { children: React.ReactNode }) {
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     // Fetch accounts on open
+    // Fetch accounts on open
     useEffect(() => {
         if (open) {
             getAccounts().then(setAccounts)
+            if (defaultOpenOcr) {
+                // Small timeout to ensure DOM is ready
+                setTimeout(() => {
+                    fileInputRef.current?.click()
+                }, 100)
+            }
         }
-    }, [open])
+    }, [open, defaultOpenOcr])
 
     const addRow = () => {
         setRows([...rows, { accountId: '', type: 'DEBIT', amount: '' }])
@@ -203,7 +210,8 @@ export function TransactionDialog({ children }: { children: React.ReactNode }) {
                         type="file"
                         ref={fileInputRef}
                         className="hidden"
-                        accept="image/*,.pdf"
+                        accept="image/*"
+                        capture="environment"
                         onChange={handleFileUpload}
                     />
                     <Button
