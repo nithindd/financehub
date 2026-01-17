@@ -210,7 +210,7 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
                         type="file"
                         ref={fileInputRef}
                         className="hidden"
-                        accept="image/*"
+                        accept="image/*,application/pdf"
                         capture="environment"
                         onChange={handleFileUpload}
                     />

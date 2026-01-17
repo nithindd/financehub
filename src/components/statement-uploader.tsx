@@ -48,27 +48,54 @@ export function StatementUploader({ children }: { children: React.ReactNode }) {
         }
     }, [open])
 
-    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
 
         setLoading(true)
-        Papa.parse(file, {
-            header: true,
-            skipEmptyLines: true,
-            complete: (results) => {
-                const data = results.data as any[]
-                setRawData(data)
-                if (data.length > 0) {
-                    setHeaders(Object.keys(data[0]))
+
+        // Check if PDF
+        if (file.type === 'application/pdf') {
+            try {
+                const arrayBuffer = await file.arrayBuffer()
+                const buffer = Buffer.from(arrayBuffer)
+
+                const { extractTextFromPDF, parseStatementText } = await import('@/lib/pdf-parser')
+                const text = await extractTextFromPDF(buffer)
+                const parsedData = parseStatementText(text)
+
+                if (parsedData.length === 0) {
+                    alert('No tabular data found in PDF. Please try a CSV export instead.')
+                    setLoading(false)
+                    return
                 }
+
+                setRawData(parsedData)
+                setHeaders(Object.keys(parsedData[0]))
                 setLoading(false)
-            },
-            error: (err) => {
-                alert("Failed to parse CSV: " + err.message)
+            } catch (err: any) {
+                alert('Failed to parse PDF: ' + err.message)
                 setLoading(false)
             }
-        })
+        } else {
+            // CSV parsing (existing logic)
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: (results) => {
+                    const data = results.data as any[]
+                    setRawData(data)
+                    if (data.length > 0) {
+                        setHeaders(Object.keys(data[0]))
+                    }
+                    setLoading(false)
+                },
+                error: (err) => {
+                    alert("Failed to parse CSV: " + err.message)
+                    setLoading(false)
+                }
+            })
+        }
     }
 
     const handleImport = async () => {
@@ -146,8 +173,8 @@ export function StatementUploader({ children }: { children: React.ReactNode }) {
                     {!rawData.length && (
                         <div className="border-2 border-dashed rounded-lg p-12 flex flex-col items-center justify-center text-muted-foreground">
                             {loading ? <Loader2 className="h-10 w-10 animate-spin mb-2" /> : <FileText className="h-10 w-10 mb-2" />}
-                            <p>{loading ? "Parsing CSV..." : "Select your bank statement CSV"}</p>
-                            <Input type="file" accept=".csv" className="mt-4 w-64" onChange={handleFileUpload} disabled={loading} />
+                            <p>{loading ? "Parsing file..." : "Select your bank statement (CSV or PDF)"}</p>
+                            <Input type="file" accept=".csv,.pdf" className="mt-4 w-64" onChange={handleFileUpload} disabled={loading} />
                         </div>
                     )}
 
