@@ -72,7 +72,7 @@ export default async function ReportsPage({
 
                 <ReportSummary summary={reportData.summary} />
 
-                <div className="flex justify-between items-center mt-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-4 gap-4">
                     <h2 className="text-lg font-semibold">Transactions</h2>
                     <ExportActions
                         data={reportData.transactions}

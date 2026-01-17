@@ -29,10 +29,10 @@ export function ReportFilters() {
     }
 
     return (
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end p-4 bg-muted/30 rounded-lg border">
+        <div className="flex flex-col gap-4 p-4 bg-muted/30 rounded-lg border">
             <div className="grid gap-2">
                 <span className="text-sm font-medium">Presets</span>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" onClick={() => applyDates(startOfMonth(new Date()), endOfMonth(new Date()))}>
                         This Month
                     </Button>
@@ -51,7 +51,7 @@ export function ReportFilters() {
                 </div>
             </div>
 
-            <div className="flex gap-2 items-end ml-auto">
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-end w-full sm:w-auto sm:ml-auto">
                 <div className="grid gap-2">
                     <span className="text-sm font-medium">From</span>
                     <Input type="date" value={start} onChange={(e) => setStart(e.target.value)} className="w-auto" />
