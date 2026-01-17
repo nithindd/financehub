@@ -4,6 +4,17 @@ A professional double-entry accounting system with AI-powered invoice scanning, 
 
 ![Next.js](https://img.shields.io/badge/Next.js-15-black) ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue) ![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-green) ![Tailwind](https://img.shields.io/badge/Tailwind-CSS-38bdf8)
 
+## 🏗️ Architecture
+
+![FinanceHub Architecture](C:/Users/nithi/.gemini/antigravity/brain/f183578e-0b2d-4ba2-b5f4-5e4d70d2278d/financehub_architecture_1768683984833.png)
+
+The application follows a modern serverless architecture:
+- **Frontend**: Next.js 15 with React Server Components and Client Components
+- **Backend**: Next.js Server Actions for type-safe API calls
+- **Database**: Supabase PostgreSQL with Row Level Security
+- **External Services**: Google OAuth, Gemini AI, Resend Email
+
+
 ## ✨ Features
 
 ### 📊 Core Accounting
