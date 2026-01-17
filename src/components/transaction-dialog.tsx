@@ -71,37 +71,78 @@ export function TransactionDialog({ children }: { children: React.ReactNode }) {
         const file = e.target.files?.[0]
         if (!file) return
 
+        console.log("Client: File selected, starting upload...", file.name, file.size)
+
+        // Reset input so same file can be selected again
+        e.target.value = ''
+
         setOcrLoading(true)
         const formData = new FormData()
         formData.append('file', file)
 
-        const result = await processInvoice(formData)
-        setOcrLoading(false)
+        try {
+            const result = await processInvoice(formData)
+            console.log("Client: OCR Result received", result)
+            setOcrLoading(false)
 
-        if (result.error) {
-            alert(`OCR Failed: ${result.error}`)
-            return
-        }
-
-        if (result.data) {
-            const { date: dateStr, description: desc, totalAmount } = result.data
-
-            if (dateStr) setDate(new Date(dateStr))
-            if (desc) setDescription(desc)
-
-            // Auto-fill rows if total found
-            if (totalAmount) {
-                const amountStr = totalAmount.toString()
-                const expenseAcc = accounts.find(a => a.type === 'EXPENSE')
-                const cashAcc = accounts.find(a => a.type === 'ASSET' || a.name === 'Cash' || a.name === 'Bank Account') // Simplified guessing
-
-                setRows([
-                    { accountId: expenseAcc?.id || '', type: 'DEBIT', amount: amountStr },
-                    { accountId: cashAcc?.id || '', type: 'CREDIT', amount: amountStr }
-                ])
+            if (result.error) {
+                console.error('OCR Error:', result.error)
+                alert(`OCR Failed: ${result.error}`)
+                return
             }
+
+            if (result.data) {
+                const { date: dateStr, description: desc, totalAmount } = result.data
+
+                if (dateStr) {
+                    const parsedDate = new Date(dateStr)
+                    if (!isNaN(parsedDate.getTime())) {
+                        setDate(parsedDate)
+                    }
+                }
+                if (desc) setDescription(desc)
+
+                // Auto-fill rows if total found
+                if (totalAmount && accounts.length > 0) {
+                    const amountValue = typeof totalAmount === 'string' ? parseFloat(totalAmount) : totalAmount
+                    if (isNaN(amountValue)) return
+
+                    const amountStr = amountValue.toFixed(2)
+
+                    // Find potential accounts
+                    const expenseAcc = accounts.find(a => a.type === 'EXPENSE')
+                    const assetAcc = accounts.find(a => a.type === 'ASSET' || a.name.toLowerCase().includes('cash') || a.name.toLowerCase().includes('bank'))
+
+                    const newRows: JournalEntryRow[] = []
+                    if (expenseAcc) {
+                        newRows.push({ accountId: expenseAcc.id, type: 'DEBIT', amount: amountStr })
+                    }
+                    if (assetAcc) {
+                        newRows.push({ accountId: assetAcc.id, type: 'CREDIT', amount: amountStr })
+                    }
+
+                    if (newRows.length === 2) {
+                        setRows(newRows)
+                    } else if (newRows.length > 0) {
+                        // Just append or replace the first two if we only found one
+                        const updatedRows = [...rows]
+                        if (expenseAcc) {
+                            updatedRows[0] = { accountId: expenseAcc.id, type: 'DEBIT', amount: amountStr }
+                        }
+                        if (assetAcc) {
+                            updatedRows[1] = { accountId: assetAcc.id, type: 'CREDIT', amount: amountStr }
+                        }
+                        setRows(updatedRows)
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("Client: processInvoice Exception", err)
+            alert("Failed to process invoice. Check console.")
+            setOcrLoading(false)
         }
     }
+
 
     const totalDebits = rows
         .filter(r => r.type === 'DEBIT')
@@ -166,9 +207,13 @@ export function TransactionDialog({ children }: { children: React.ReactNode }) {
                         onChange={handleFileUpload}
                     />
                     <Button
+                        type="button"
                         variant="outline"
                         className="w-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800"
-                        onClick={() => fileInputRef.current?.click()}
+                        onClick={() => {
+                            console.log("Client: Clicked Scan Invoice");
+                            fileInputRef.current?.click();
+                        }}
                         disabled={ocrLoading}
                     >
                         {ocrLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}

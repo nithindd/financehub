@@ -1,15 +1,27 @@
 'use server'
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 
+const GEN_AI_MODEL = "gemini-3-flash-preview";
+
 export async function processInvoice(formData: FormData) {
     const file = formData.get('file') as File;
-    if (!file) return { error: 'No file provided' };
+    console.log("OCR Action: Started processing");
 
-    if (!process.env.GOOGLE_API_KEY) {
-        return { error: 'Server missing GOOGLE_API_KEY' };
+    if (!file) {
+        console.error("OCR Error: No file provided in FormData");
+        return { error: 'No file provided' };
+    }
+
+    // Debug logging (masked key)
+    const key = process.env.GOOGLE_API_KEY;
+    console.log(`OCR Action: Checking API Key. Present: ${!!key}, Length: ${key ? key.length : 0}`);
+
+    if (!key) {
+        console.error('OCR Error: GOOGLE_API_KEY is missing from process.env');
+        return { error: 'Server configuration error: GOOGLE_API_KEY missing. Please check .env.local and restart server.' };
     }
 
     try {
@@ -18,16 +30,25 @@ export async function processInvoice(formData: FormData) {
         const base64Image = buffer.toString('base64');
         const mimeType = file.type;
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        // Using structured output for higher reliability
+        const model = genAI.getGenerativeModel({
+            model: GEN_AI_MODEL,
+            generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                        date: { type: SchemaType.STRING, description: "Date in YYYY-MM-DD format" },
+                        description: { type: SchemaType.STRING, description: "Vendor name and brief summary of items" },
+                        totalAmount: { type: SchemaType.NUMBER, description: "Total amount on the invoice" }
+                    },
+                    required: ["date", "description", "totalAmount"]
+                }
+            }
+        });
 
-        const prompt = `
-      Analyze this invoice/receipt image. Extract the following fields in JSON format:
-      - date (YYYY-MM-DD)
-      - description (Vendor name and brief summary of items)
-      - totalAmount (number)
-      
-      If you cannot find a value, use null. Return ONLY raw JSON, no markdown formatting.
-    `;
+
+        const prompt = "Analyze this invoice/receipt image and extract metadata.";
 
         const result = await model.generateContent([
             prompt,
@@ -41,13 +62,12 @@ export async function processInvoice(formData: FormData) {
 
         const response = await result.response;
         const text = response.text();
+        console.log("Gemini OCR Response:", text);
 
-        // Clean up markdown code blocks if present
-        const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-
-        return { data: JSON.parse(cleanText) };
+        return { data: JSON.parse(text) };
     } catch (error: any) {
-        console.error('OCR Error:', error);
+        console.error('OCR Action Error:', error);
         return { error: error.message || 'Failed to process image' };
     }
 }
+
