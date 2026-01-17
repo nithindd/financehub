@@ -154,7 +154,7 @@ export function StatementUploader({ children }: { children: React.ReactNode }) {
                     {/* Step 2: Map & Preview */}
                     {rawData.length > 0 && (
                         <div className="space-y-6">
-                            <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg border">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg border">
                                 <div className="space-y-2">
                                     <Label>Target Bank/Asset Account</Label>
                                     <Select value={targetAccountId} onValueChange={setTargetAccountId}>
@@ -191,7 +191,7 @@ export function StatementUploader({ children }: { children: React.ReactNode }) {
 
                             <div className="space-y-2">
                                 <h3 className="text-sm font-medium">Preview (First 3 Rows)</h3>
-                                <div className="border rounded-md overflow-hidden">
+                                <div className="border rounded-md overflow-x-auto">
                                     <Table>
                                         <TableHeader className="bg-muted">
                                             <TableRow>
