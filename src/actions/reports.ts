@@ -2,6 +2,13 @@
 
 import { createClient } from '@/utils/supabase/server'
 
+export interface JournalEntryDetail {
+    amount: number
+    type: 'DEBIT' | 'CREDIT'
+    accountName: string
+    accountType: string
+}
+
 export interface ReportTransaction {
     id: string
     date: string
@@ -10,6 +17,7 @@ export interface ReportTransaction {
     type: 'INCOME' | 'EXPENSE' | 'TRANSFER'
     category: string // Account name
     evidencePath?: string
+    journalEntries: JournalEntryDetail[]
 }
 
 export interface ReportSummary {
@@ -103,7 +111,13 @@ export async function getFinancialReport(startDate: Date, endDate: Date): Promis
             amount: amount,
             type: type,
             category: category,
-            evidencePath: tx.evidence_path
+            evidencePath: tx.evidence_path,
+            journalEntries: tx.journal_entries.map((e: any) => ({
+                amount: parseFloat(e.amount),
+                type: e.entry_type as 'DEBIT' | 'CREDIT',
+                accountName: e.accounts.name,
+                accountType: e.accounts.type
+            }))
         })
     })
 

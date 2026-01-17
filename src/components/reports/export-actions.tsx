@@ -18,13 +18,19 @@ interface ExportActionsProps {
 
 export function ExportActions({ data, summary, startDate, endDate, defaultEmail }: ExportActionsProps) {
     const handleDownloadCSV = () => {
-        const csv = Papa.unparse(data.map(t => ({
-            Date: new Date(t.date).toLocaleDateString(),
-            Description: t.description,
-            Category: t.category,
-            Type: t.type,
-            Amount: t.amount.toFixed(2)
-        })))
+        // Expand each transaction into its journal entries
+        const expandedData = data.flatMap(t =>
+            t.journalEntries.map(e => ({
+                Date: new Date(t.date).toLocaleDateString(),
+                Transaction: t.description,
+                Account: e.accountName,
+                AccountType: e.accountType,
+                EntryType: e.type,
+                Amount: e.amount.toFixed(2)
+            }))
+        )
+
+        const csv = Papa.unparse(expandedData)
 
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
         const link = document.createElement('url')
@@ -52,7 +58,7 @@ export function ExportActions({ data, summary, startDate, endDate, defaultEmail 
         doc.setFontSize(10)
         doc.text("Date", 14, y)
         doc.text("Description", 40, y)
-        doc.text("Category", 100, y)
+        doc.text("Account", 100, y)
         doc.text("Amount", 160, y)
 
         y += 5
@@ -60,16 +66,27 @@ export function ExportActions({ data, summary, startDate, endDate, defaultEmail 
         y += 5
 
         data.forEach((t) => {
-            if (y > 280) {
-                doc.addPage()
-                y = 20
-            }
-            doc.text(new Date(t.date).toLocaleDateString(), 14, y)
-            const desc = t.description.length > 30 ? t.description.substring(0, 27) + "..." : t.description
-            doc.text(desc, 40, y)
-            doc.text(t.category, 100, y)
-            doc.text(`$${t.amount.toFixed(2)}`, 160, y)
-            y += 7
+            t.journalEntries.forEach((e, index) => {
+                if (y > 280) {
+                    doc.addPage()
+                    y = 20
+                }
+
+                // Only show date and description for the first entry of a transaction
+                if (index === 0) {
+                    doc.setFont("helvetica", "bold")
+                    doc.text(new Date(t.date).toLocaleDateString(), 14, y)
+                    const desc = t.description.length > 30 ? t.description.substring(0, 27) + "..." : t.description
+                    doc.text(desc, 40, y)
+                    doc.setFont("helvetica", "normal")
+                }
+
+                doc.text(e.accountName, 100, y)
+                const amountText = e.type === 'CREDIT' ? `(${e.amount.toFixed(2)})` : e.amount.toFixed(2)
+                doc.text(amountText, 160, y, { align: 'right' })
+                y += 7
+            })
+            y += 2 // Extra space between transactions
         })
 
         doc.save(`financial_report_${startDate.toISOString().split('T')[0]}.pdf`)
