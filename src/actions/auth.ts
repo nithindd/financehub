@@ -59,22 +59,8 @@ export async function signUpWithEmail(
         return { error: error.message }
     }
 
-    // Update/Create profile with additional info
-    if (data.user) {
-        const { error: profileError } = await supabase
-            .from('profiles')
-            .upsert({
-                id: data.user.id,
-                username,
-                first_name: firstName,
-                last_name: lastName,
-                updated_at: new Date().toISOString()
-            })
-
-        if (profileError) {
-            console.error('Profile persistence error:', profileError)
-        }
-    }
+    // Profile is automatically created by the 'handle_new_user' trigger 
+    // using the metadata (username, first_name, last_name) passed in signUp.
 
     revalidatePath('/')
     return { success: true }
