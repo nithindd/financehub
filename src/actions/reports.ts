@@ -163,7 +163,7 @@ export async function sendReportEmail(formData: FormData) {
         const attachments: any[] = await Promise.all(
             files.map(async (file) => ({
                 filename: file.name,
-                content: Buffer.from(await file.arrayBuffer())
+                content: Buffer.from(await file.arrayBuffer()).toString('base64')
             }))
         )
 
@@ -189,9 +189,10 @@ export async function sendReportEmail(formData: FormData) {
                         return null
                     }
                     console.log(`[EMAIL DEBUG] Successfully downloaded receipt: ${path} (${data.size} bytes, type: ${data.type})`)
+                    const base64Content = Buffer.from(await data.arrayBuffer()).toString('base64')
                     return {
                         filename: path.split('/').pop(),
-                        content: Buffer.from(await data.arrayBuffer()),
+                        content: base64Content,
                         contentType: data.type
                     }
                 })

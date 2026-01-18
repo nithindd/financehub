@@ -47,6 +47,12 @@ export function EmailReportDialog({
     const [status, setStatus] = React.useState<{ type: 'success' | 'error', message: string } | null>(null)
 
     React.useEffect(() => {
+        if (!open) {
+            setStatus(null)
+        }
+    }, [open])
+
+    React.useEffect(() => {
         if (defaultEmail) {
             setEmail(defaultEmail)
         }
@@ -159,52 +165,69 @@ export function EmailReportDialog({
                         Send this financial report to yourself or your accountant.
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="email">Email Address</Label>
-                        <Input
-                            id="email"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            placeholder="name@example.com"
-                            required
-                        />
-                    </div>
 
-                    <div className="grid gap-2">
-                        <Label>Attachments</Label>
-                        <div className="flex flex-col gap-2">
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="csv" checked={attachCsv} onCheckedChange={(c) => setAttachCsv(!!c)} />
-                                <Label htmlFor="csv">Include CSV (Excel)</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="pdf" checked={attachPdf} onCheckedChange={(c) => setAttachPdf(!!c)} />
-                                <Label htmlFor="pdf">Include PDF</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Checkbox id="receipts" checked={attachReceipts} onCheckedChange={(c) => setAttachReceipts(!!c)} />
-                                <Label htmlFor="receipts">Include Receipts (Images)</Label>
+                {status?.type === 'success' ? (
+                    <div className="py-12 flex flex-col items-center justify-center space-y-4">
+                        <CheckCircle className="h-16 w-16 text-green-500 animate-in zoom-in duration-300" />
+                        <div className="text-center">
+                            <h3 className="text-lg font-semibold">Report Sent!</h3>
+                            <p className="text-sm text-muted-foreground">{status.message}</p>
+                        </div>
+                        <Button onClick={() => onOpenChange(false)} variant="outline">Close Dialog</Button>
+                    </div>
+                ) : (
+                    <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+                        {status && (
+                            <Alert variant="destructive">
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertTitle>Error</AlertTitle>
+                                <AlertDescription>{status.message}</AlertDescription>
+                            </Alert>
+                        )}
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="email">Email Address</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="name@example.com"
+                                required
+                            />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label>Attachments</Label>
+                            <div className="flex flex-col gap-2">
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox id="csv" checked={attachCsv} onCheckedChange={(c) => setAttachCsv(!!c)} />
+                                    <Label htmlFor="csv">Include CSV (Excel)</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox id="pdf" checked={attachPdf} onCheckedChange={(c) => setAttachPdf(!!c)} />
+                                    <Label htmlFor="pdf">Include PDF</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox id="receipts" checked={attachReceipts} onCheckedChange={(c) => setAttachReceipts(!!c)} />
+                                    <Label htmlFor="receipts">Include Receipts (Images)</Label>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {status && (
-                        <Alert variant={status.type === 'error' ? 'destructive' : 'default'} className={status.type === 'success' ? 'border-green-500 bg-green-50 text-green-700' : ''}>
-                            {status.type === 'error' ? <AlertCircle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4 text-green-500" />}
-                            <AlertTitle>{status.type === 'error' ? 'Error' : 'Success'}</AlertTitle>
-                            <AlertDescription>{status.message}</AlertDescription>
-                        </Alert>
-                    )}
-
-                    <DialogFooter>
-                        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-                        <Button type="submit" disabled={isSending}>
-                            {isSending ? "Sending..." : "Send Email"}
-                        </Button>
-                    </DialogFooter>
-                </form>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+                            <Button type="submit" disabled={isSending}>
+                                {isSending ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Sending...
+                                    </>
+                                ) : "Send Email"}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                )}
             </DialogContent>
         </Dialog>
     )
