@@ -77,6 +77,7 @@ export default function ProfilePage() {
             setProfile(result.profile)
 
             // Detect if user is OAuth (Google) user
+            console.log('Profile Provider:', result.profile.provider)
             const isOAuth = result.profile.provider === 'google'
             setIsOAuthUser(isOAuth)
 
