@@ -132,7 +132,9 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
 
         if (field === 'accountId') {
             const pms = getAccountPaymentMethods(value)
-            if (pms.length > 0) {
+            if (pms.length === 1) {
+                setPaymentMethodId(pms[0].id)
+            } else if (pms.length > 1) {
                 setPaymentMethodId(null)
             }
         }
@@ -638,9 +640,14 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
                                                             <SelectValue placeholder="Select Account" />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            {accounts.map(acc => (
-                                                                <SelectItem key={acc.id} value={acc.id}>{acc.name} ({acc.type})</SelectItem>
-                                                            ))}
+                                                            {accounts.map(acc => {
+                                                                const pmName = acc.payment_methods?.[0] ? ` - ${acc.payment_methods[0].name} (...${acc.payment_methods[0].last_four})` : ''
+                                                                return (
+                                                                    <SelectItem key={acc.id} value={acc.id}>
+                                                                        {acc.name} ({acc.type}){pmName}
+                                                                    </SelectItem>
+                                                                )
+                                                            })}
                                                         </SelectContent>
                                                     </Select>
                                                 </div>

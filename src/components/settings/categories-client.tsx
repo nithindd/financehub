@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Account, AccountType, updateAccount, deleteAccount, updatePaymentMethod, deletePaymentMethod } from '@/actions/accounts'
+import { Account, AccountType, updateAccount, deleteAccount, updatePaymentMethod, deletePaymentMethod, addPaymentMethod } from '@/actions/accounts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -39,6 +39,13 @@ export function CategoriesClient({ initialAccounts }: CategoriesClientProps) {
     const [editPmName, setEditPmName] = React.useState('')
     const [editPmLastFour, setEditPmLastFour] = React.useState('')
     const [editPmType, setEditPmType] = React.useState<'DEBIT_CARD' | 'CREDIT_CARD'>('DEBIT_CARD')
+
+    // Payment Method Add State
+    const [isPmAddOpen, setIsPmAddOpen] = React.useState(false)
+    const [targetAccountId, setTargetAccountId] = React.useState<string | null>(null)
+    const [addPmName, setAddPmName] = React.useState('')
+    const [addPmLastFour, setAddPmLastFour] = React.useState('')
+    const [addPmType, setAddPmType] = React.useState<'DEBIT_CARD' | 'CREDIT_CARD'>('DEBIT_CARD')
 
     const [isSubmitting, setIsSubmitting] = React.useState(false)
 
@@ -124,6 +131,31 @@ export function CategoriesClient({ initialAccounts }: CategoriesClientProps) {
         }
     }
 
+    const openAddPm = (accountId: string) => {
+        setTargetAccountId(accountId)
+        setAddPmName('')
+        setAddPmLastFour('')
+        setAddPmType('DEBIT_CARD')
+        setIsPmAddOpen(true)
+    }
+
+    const handleAddPm = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!targetAccountId || !addPmName.trim() || !addPmLastFour.trim()) return
+
+        setIsSubmitting(true)
+        const result = await addPaymentMethod(targetAccountId, addPmType, addPmName.trim(), addPmLastFour)
+        setIsSubmitting(false)
+
+        if (result.error) {
+            alert('Failed to add payment method: ' + result.error)
+        } else {
+            setIsPmAddOpen(false)
+            setTargetAccountId(null)
+            router.refresh()
+        }
+    }
+
 
     return (
         <>
@@ -164,10 +196,21 @@ export function CategoriesClient({ initialAccounts }: CategoriesClientProps) {
                                             </div>
                                         </div>
 
-                                        {account.payment_methods && account.payment_methods.length > 0 && (
-                                            <div className="flex flex-col gap-2 mt-2 pl-4 border-l-2 ml-1">
+
+                                        <div className="mt-2 pl-4 border-l-2 ml-1 flex flex-col gap-2">
+                                            <div className="flex items-center justify-between">
                                                 <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Linked Cards</p>
-                                                {account.payment_methods.map(pm => (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-6 text-[10px] px-2"
+                                                    onClick={() => openAddPm(account.id)}
+                                                >
+                                                    <Plus className="h-3 w-3 mr-1" /> Add Card
+                                                </Button>
+                                            </div>
+                                            {account.payment_methods && account.payment_methods.length > 0 ? (
+                                                account.payment_methods.map(pm => (
                                                     <div key={pm.id} className="flex items-center justify-between text-sm bg-muted/40 p-2 rounded-md group">
                                                         <div className="flex items-center gap-3">
                                                             <CreditCard className="w-4 h-4 text-muted-foreground" />
@@ -177,7 +220,7 @@ export function CategoriesClient({ initialAccounts }: CategoriesClientProps) {
                                                             </Badge>
                                                             <span className="text-[10px] text-muted-foreground uppercase">{pm.type.replace('_', ' ')}</span>
                                                         </div>
-                                                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                                                             <Button
                                                                 variant="ghost"
                                                                 size="icon"
@@ -198,9 +241,11 @@ export function CategoriesClient({ initialAccounts }: CategoriesClientProps) {
                                                             </Button>
                                                         </div>
                                                     </div>
-                                                ))}
-                                            </div>
-                                        )}
+                                                ))
+                                            ) : (
+                                                <p className="text-[10px] text-muted-foreground italic">No cards linked</p>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                                 {accts.length === 0 && (
@@ -221,7 +266,7 @@ export function CategoriesClient({ initialAccounts }: CategoriesClientProps) {
                         </Button>
                     </CardContent>
                 </Card>
-            </div>
+            </div >
 
             <AddAccountDialog open={isAddOpen} onOpenChange={setIsAddOpen} />
 
@@ -307,6 +352,65 @@ export function CategoriesClient({ initialAccounts }: CategoriesClientProps) {
                             </Button>
                             <Button type="submit" disabled={isSubmitting}>
                                 {isSubmitting ? 'Saving...' : 'Save'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Add Payment Method Dialog */}
+            <Dialog open={isPmAddOpen} onOpenChange={setIsPmAddOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add Payment Method</DialogTitle>
+                        <DialogDescription>Link a card to this account</DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleAddPm} className="space-y-4">
+                        <div className="grid gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="add-pm-name">Card Name (e.g. "Chase Freedom")</Label>
+                                <Input
+                                    id="add-pm-name"
+                                    value={addPmName}
+                                    onChange={(e) => setAddPmName(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="add-pm-type">Type</Label>
+                                    <Select
+                                        value={addPmType}
+                                        onValueChange={(v: 'DEBIT_CARD' | 'CREDIT_CARD') => setAddPmType(v)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="DEBIT_CARD">Debit Card</SelectItem>
+                                            <SelectItem value="CREDIT_CARD">Credit Card</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="add-pm-last-four">Last 4 Digits</Label>
+                                    <Input
+                                        id="add-pm-last-four"
+                                        maxLength={4}
+                                        pattern="\d{4}"
+                                        value={addPmLastFour}
+                                        onChange={(e) => setAddPmLastFour(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => setIsPmAddOpen(false)}>
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={isSubmitting}>
+                                {isSubmitting ? 'Adding...' : 'Add Card'}
                             </Button>
                         </DialogFooter>
                     </form>
