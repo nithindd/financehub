@@ -214,13 +214,47 @@ export async function get2FAFactors() {
  * Get user preferences
  */
 export async function getUserPreferences() {
-    return { timezone: 'UTC' }
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { timezone: 'UTC' }
+    }
+
+    const { data: preferences } = await supabase
+        .from('user_preferences')
+        .select('timezone')
+        .eq('user_id', user.id)
+        .single()
+
+    return { timezone: preferences?.timezone || 'UTC' }
 }
 
 /**
  * Update user preferences
  */
 export async function updateUserPreferences(timezone: string) {
-    // Placeholder for future preference storage
-    return { success: true }
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { error: 'Not authenticated' }
+    }
+
+    const { error } = await supabase
+        .from('user_preferences')
+        .upsert({
+            user_id: user.id,
+            timezone,
+            updated_at: new Date().toISOString()
+        }, {
+            onConflict: 'user_id'
+        })
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    revalidatePath('/profile')
+    return { success: true, message: 'Preferences updated successfully' }
 }

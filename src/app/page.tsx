@@ -26,7 +26,7 @@ export default async function Page() {
         <Header title="FinanceHub" />
         <AccountSeeder />
 
-        <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
+        <main className="container mx-auto grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-8 md:gap-8 max-w-7xl">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <TransactionDialog defaultOpenOcr={true}>
               <Button className="h-24 flex-col gap-2 bg-primary/10 text-primary hover:bg-primary/20 md:hidden" variant="outline">
@@ -293,12 +293,6 @@ export default async function Page() {
           </div>
         </section>
       </main>
-
-      <footer className="border-t py-8 bg-muted/20">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} FinanceHub. All rights reserved.
-        </div>
-      </footer>
     </div>
   )
 }
