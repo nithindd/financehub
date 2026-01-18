@@ -184,14 +184,27 @@ export async function sendReportEmail(formData: FormData) {
             const receiptAttachments = await Promise.all(
                 cappedReceiptPaths.map(async (path) => {
                     console.log(`[EMAIL DEBUG] Attempting to download: ${path}`)
-                    const { data, error } = await supabase.storage.from('evidence').download(path)
+
+                    // Extract the relative path from the full URL if needed
+                    // Path might be a full URL like: https://.../storage/v1/object/public/evidence/user-id/file.jpg
+                    // We need just: user-id/file.jpg
+                    let relativePath = path
+                    if (path.includes('/storage/v1/object/public/evidence/')) {
+                        relativePath = path.split('/storage/v1/object/public/evidence/')[1]
+                    } else if (path.includes('/storage/v1/object/evidence/')) {
+                        relativePath = path.split('/storage/v1/object/evidence/')[1]
+                    }
+
+                    console.log(`[EMAIL DEBUG] Using relative path: ${relativePath}`)
+
+                    const { data, error } = await supabase.storage.from('evidence').download(relativePath)
                     if (error || !data) {
                         console.error('[EMAIL DEBUG] Error downloading receipt:', path, error)
                         return null
                     }
                     console.log(`[EMAIL DEBUG] Successfully downloaded receipt: ${path} (${data.size} bytes, type: ${data.type})`)
                     return {
-                        filename: path.split('/').pop(),
+                        filename: relativePath.split('/').pop(),
                         content: Buffer.from(await data.arrayBuffer())
                     }
                 })
