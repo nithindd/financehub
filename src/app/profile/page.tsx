@@ -1,17 +1,19 @@
 'use client'
 
 import * as React from 'react'
+import Link from 'next/link'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { User, Lock, Shield, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
+import { User, Lock, Shield, AlertCircle, CheckCircle2, Loader2, Settings, HelpCircle } from 'lucide-react'
 import { getUserProfile, updateProfile, enable2FA, verify2FA, disable2FA, get2FAFactors } from '@/actions/profile'
 import { updatePassword } from '@/actions/auth'
 import { PasswordStrengthIndicator } from '@/components/password-strength-indicator'
 import { UsernameInput } from '@/components/username-input'
+import { TimezoneForm } from '@/components/profile/timezone-form'
 import QRCode from 'qrcode'
 
 export default function ProfilePage() {
@@ -190,7 +192,7 @@ export default function ProfilePage() {
             )}
 
             <Tabs defaultValue="account" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-4">
                     <TabsTrigger value="account" className="flex items-center gap-2">
                         <User className="h-4 w-4" />
                         Account
@@ -202,6 +204,10 @@ export default function ProfilePage() {
                     <TabsTrigger value="2fa" className="flex items-center gap-2">
                         <Shield className="h-4 w-4" />
                         2FA
+                    </TabsTrigger>
+                    <TabsTrigger value="settings" className="flex items-center gap-2">
+                        <Settings className="h-4 w-4" />
+                        Settings
                     </TabsTrigger>
                 </TabsList>
 
@@ -371,6 +377,46 @@ export default function ProfilePage() {
                                     </Button>
                                 </div>
                             )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="settings">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Preferences</CardTitle>
+                            <CardDescription>Customize your FinanceHub experience</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <TimezoneForm initialTimezone="UTC" />
+                        </CardContent>
+                    </Card>
+
+                    <Card className="mt-6">
+                        <CardHeader>
+                            <CardTitle>Management</CardTitle>
+                            <CardDescription>Manage categories and vendor mappings</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                            <Link href="/settings/categories">
+                                <Button variant="outline" className="w-full justify-start">
+                                    Manage Categories
+                                </Button>
+                            </Link>
+                            <Link href="/settings/vendors">
+                                <Button variant="outline" className="w-full justify-start">
+                                    Vendor Mappings
+                                </Button>
+                            </Link>
+
+                            <div className="pt-4 border-t mt-4">
+                                <Link href="/manual">
+                                    <Button variant="secondary" className="w-full justify-start gap-2">
+                                        <HelpCircle className="h-4 w-4" />
+                                        User Manual & Help
+                                    </Button>
+                                </Link>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
