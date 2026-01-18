@@ -20,10 +20,19 @@ export async function GET(request: Request) {
             const { data: { user } } = await supabase.auth.getUser()
 
             if (user && user.email) {
-                const createdAt = new Date(user.created_at).getTime()
-                const now = new Date().getTime()
-                // If created in the last 30 seconds, consider it a new signup
-                if (now - createdAt < 30000) {
+                const createdAtStr = user.created_at;
+                const createdAt = new Date(createdAtStr).getTime();
+                const now = new Date().getTime();
+                const diff = now - createdAt;
+
+                console.log(`OAuth Callback Debug: User Email: ${user.email}`);
+                console.log(`OAuth Callback Debug: Created At Str: ${createdAtStr}, Timestamp: ${createdAt}`);
+                console.log(`OAuth Callback Debug: Now: ${now}, Diff: ${diff}`);
+                console.log(`OAuth Callback Debug: ADMIN_EMAIL: ${process.env.ADMIN_EMAIL}`);
+
+                // If created in the last 30 seconds (30000ms), consider it a new signup
+                // Increasing window to 60 seconds to be safe against clock skew
+                if (diff < 60000) {
                     // Notify Admin
                     try {
                         const adminEmail = process.env.ADMIN_EMAIL
@@ -34,7 +43,7 @@ export async function GET(request: Request) {
                             const name = metadata.full_name || `${metadata.first_name || ''} ${metadata.last_name || ''}`.trim() || 'N/A'
                             const username = metadata.username || user.email.split('@')[0]
 
-                            await sendEmail({
+                            const emailResult = await sendEmail({
                                 to: adminEmail,
                                 subject: 'New User Registration (OAuth) - FinanceHub',
                                 html: `
@@ -45,6 +54,7 @@ export async function GET(request: Request) {
                                     <p><strong>Provider:</strong> ${user.app_metadata.provider || 'Google'}</p>
                                 `
                             })
+                            console.log('OAuth Admin Email Result:', emailResult)
                         }
                     } catch (err) {
                         console.error('Failed to send admin notification for OAuth:', err)
