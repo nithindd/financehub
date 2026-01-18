@@ -73,7 +73,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                                         {expandedId === tx.id ? '▼' : '▶'}
                                     </td>
                                     <td className="p-4 align-middle">
-                                        {new Date(tx.date).toLocaleDateString()}
+                                        {new Date(tx.date).toLocaleDateString(undefined, { timeZone: 'UTC' })}
                                     </td>
                                     <td className="p-4 align-middle font-medium">
                                         <div className="flex items-center gap-2">
