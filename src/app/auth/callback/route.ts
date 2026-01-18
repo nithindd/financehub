@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
+import { sendEmail } from '@/lib/email'
 
 export async function GET(request: Request) {
     const requestUrl = new URL(request.url)
@@ -15,6 +16,42 @@ export async function GET(request: Request) {
         const supabase = await createClient()
         const { error } = await supabase.auth.exchangeCodeForSession(code)
         if (!error) {
+            // Check if this is a new user (created within last 30 seconds)
+            const { data: { user } } = await supabase.auth.getUser()
+
+            if (user && user.email) {
+                const createdAt = new Date(user.created_at).getTime()
+                const now = new Date().getTime()
+                // If created in the last 30 seconds, consider it a new signup
+                if (now - createdAt < 30000) {
+                    // Notify Admin
+                    try {
+                        const adminEmail = process.env.ADMIN_EMAIL
+                        if (adminEmail) {
+                            console.log('Sending admin notification for OAuth Signup to:', adminEmail)
+                            // Retrieve metadata
+                            const metadata = user.user_metadata || {}
+                            const name = metadata.full_name || `${metadata.first_name || ''} ${metadata.last_name || ''}`.trim() || 'N/A'
+                            const username = metadata.username || user.email.split('@')[0]
+
+                            await sendEmail({
+                                to: adminEmail,
+                                subject: 'New User Registration (OAuth) - FinanceHub',
+                                html: `
+                                    <h1>New User Registered via OAuth</h1>
+                                    <p><strong>Username:</strong> ${username}</p>
+                                    <p><strong>Email:</strong> ${user.email}</p>
+                                    <p><strong>Name:</strong> ${name}</p>
+                                    <p><strong>Provider:</strong> ${user.app_metadata.provider || 'Google'}</p>
+                                `
+                            })
+                        }
+                    } catch (err) {
+                        console.error('Failed to send admin notification for OAuth:', err)
+                    }
+                }
+            }
+
             return NextResponse.redirect(`${origin}${next}`)
         }
     }

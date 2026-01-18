@@ -270,25 +270,25 @@ export default function ProfilePage() {
                                             onChange={(value) => setPersonalInfo({ ...personalInfo, username: value })}
                                         />
 
-                                        <div className="grid gap-4 sm:grid-cols-2">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="firstName">First Name</Label>
-                                                <Input
-                                                    id="firstName"
-                                                    value={personalInfo.firstName}
-                                                    onChange={(e) => setPersonalInfo({ ...personalInfo, firstName: e.target.value })}
-                                                    placeholder="John"
-                                                />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="lastName">Last Name</Label>
-                                                <Input
-                                                    id="lastName"
-                                                    value={personalInfo.lastName}
-                                                    onChange={(e) => setPersonalInfo({ ...personalInfo, lastName: e.target.value })}
-                                                    placeholder="Doe"
-                                                />
-                                            </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="firstName">First Name</Label>
+                                            <Input
+                                                id="firstName"
+                                                value={personalInfo.firstName}
+                                                onChange={(e) => setPersonalInfo({ ...personalInfo, firstName: e.target.value })}
+                                                placeholder="John"
+                                                disabled={isOAuthUser}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="lastName">Last Name</Label>
+                                            <Input
+                                                id="lastName"
+                                                value={personalInfo.lastName}
+                                                onChange={(e) => setPersonalInfo({ ...personalInfo, lastName: e.target.value })}
+                                                placeholder="Doe"
+                                                disabled={isOAuthUser}
+                                            />
                                         </div>
 
                                         <div className="space-y-2">
