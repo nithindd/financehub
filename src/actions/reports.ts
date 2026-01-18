@@ -139,6 +139,7 @@ export async function sendReportEmail(formData: FormData) {
     const summary = formData.get('summary') as string
     const period = formData.get('period') as string
     const includeReceipts = formData.get('includeReceipts') === 'true'
+    const receiptPathsJson = formData.get('receiptPaths') as string
     const files = formData.getAll('files') as File[]
 
     // In a real app, use Resend/SendGrid/AWS SES here
@@ -156,32 +157,71 @@ export async function sendReportEmail(formData: FormData) {
     try {
         const { Resend } = await import('resend')
         const resend = new Resend(resendApiKey)
+        const supabase = await createClient()
 
-        // Convert files to attachments format for Resend
-        // Resend expects: { filename, content: Buffer }
-        const attachments = await Promise.all(
+        // Convert files (PDF/CSV) to attachments format for Resend
+        const attachments: any[] = await Promise.all(
             files.map(async (file) => ({
                 filename: file.name,
                 content: Buffer.from(await file.arrayBuffer())
             }))
         )
 
+        // Handle Receipts
+        let receiptPaths: string[] = []
+        if (includeReceipts && receiptPathsJson) {
+            receiptPaths = JSON.parse(receiptPathsJson)
+        }
+
+        const cappedReceiptPaths = receiptPaths.slice(0, 10)
+        const hasMoreReceipts = receiptPaths.length > 10
+
+        // Download and attach receipts
+        if (cappedReceiptPaths.length > 0) {
+            const receiptAttachments = await Promise.all(
+                cappedReceiptPaths.map(async (path) => {
+                    const { data, error } = await supabase.storage.from('evidence').download(path)
+                    if (error || !data) {
+                        console.error('Error downloading receipt:', path, error)
+                        return null
+                    }
+                    return {
+                        filename: path.split('/').pop(),
+                        content: Buffer.from(await data.arrayBuffer())
+                    }
+                })
+            )
+
+            // Filter out nulls and add to main attachments
+            receiptAttachments.forEach(att => {
+                if (att) attachments.push(att)
+            })
+        }
+
         const fromAddress = process.env.EMAIL_FROM || 'FinanceHub <onboarding@resend.dev>'
-        console.log(`[EMAIL DEBUG] Using Resend Key: ${resendApiKey ? '***Present***' : 'Missing'}`)
-        console.log(`[EMAIL DEBUG] Sending From: ${fromAddress}`)
+
+        const moreReceiptsNote = hasMoreReceipts
+            ? `<p style="color: #666; font-size: 0.9em; margin-top: 10px; border-top: 1px solid #eee; pt: 10px;">
+                Note: This report has more than 10 receipts. For security and size reasons, only the first 10 have been attached. 
+                Please view the rest in the FinanceHub dashboard or filter for a smaller time frame.
+               </p>`
+            : ''
 
         const { data, error } = await resend.emails.send({
-            from: fromAddress, // Use env var if set, otherwise default
+            from: fromAddress,
             to: [email],
             subject: `Financial Report: ${period}`,
             html: `
-                <h1>Your Financial Report</h1>
-                <p>Attached is your requested report for the period: <strong>${period}</strong>.</p>
-                <p>Summary:</p>
-                <ul>
-                    <li>Included Receipt Images: ${includeReceipts ? 'Yes' : 'No'}</li>
-                    <li>Files Attached: ${files.length}</li>
-                </ul>
+                <div style="font-family: sans-serif; color: #333; line-height: 1.6;">
+                    <h1>Your Financial Report</h1>
+                    <p>Attached is your requested report for the period: <strong>${period}</strong>.</p>
+                    <p>Summary:</p>
+                    <ul>
+                        <li>Included Receipt Images: ${includeReceipts ? 'Yes' : 'No'}</li>
+                        <li>Files Attached: ${attachments.length}</li>
+                    </ul>
+                    ${moreReceiptsNote}
+                </div>
             `,
             attachments: attachments
         })
