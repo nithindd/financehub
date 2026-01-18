@@ -49,9 +49,18 @@ export function Header({ title, showBack = false, backHref = '/' }: HeaderProps)
                     </Button>
                 )}
 
-                <Link href="/" className="flex items-center gap-2">
+                <Link href="/" className="flex items-center gap-2 mr-6">
                     <h1 className="text-xl font-bold tracking-tight text-primary">{title}</h1>
                 </Link>
+
+                <nav className="flex items-center gap-4 text-sm font-medium">
+                    <Link href="/reports" className="text-muted-foreground hover:text-foreground transition-colors">
+                        Reports
+                    </Link>
+                    <Link href="/analytics" className="text-muted-foreground hover:text-foreground transition-colors">
+                        Analytics
+                    </Link>
+                </nav>
 
                 <div className="ml-auto flex items-center gap-2 sm:gap-4">
                     <Link href="/profile" title={user.email || ''}>

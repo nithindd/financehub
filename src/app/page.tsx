@@ -49,6 +49,13 @@ export default async function Page() {
               </Button>
             </Link>
 
+            <Link href="/analytics">
+              <Button className="h-24 w-full flex-col gap-2 bg-primary/10 text-primary hover:bg-primary/20" variant="outline">
+                <BarChart3 className="h-6 w-6" />
+                <span>Analytics</span>
+              </Button>
+            </Link>
+
             <TransactionDialog>
               <Button className="h-24 flex-col gap-2" variant="outline">
                 <PlusCircle className="h-6 w-6" />
