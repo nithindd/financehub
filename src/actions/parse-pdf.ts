@@ -1,57 +1,81 @@
 'use server'
 
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
+const GEN_AI_MODEL = "gemini-1.5-flash"; // Flash is fast and good for high-volume text
 
 export async function parsePdfStatement(formData: FormData) {
-    const pdfParse = require('pdf-parse')
     const file = formData.get('file') as File
     if (!file) {
         return { success: false, error: 'No file provided' }
     }
 
     try {
-        const arrayBuffer = await file.arrayBuffer()
-        const buffer = Buffer.from(arrayBuffer)
-        const data = await pdfParse(buffer)
-        const text = data.text
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const base64Data = buffer.toString('base64');
+        const mimeType = file.type;
 
-        // Basic Tabular Extraction Logic
-        const lines = text.split('\n').filter((line: string) => line.trim())
-        const datePattern = /\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/
-        const rows: Array<Record<string, string>> = []
-
-        for (const line of lines) {
-            if (datePattern.test(line)) {
-                // Split by multiple spaces or tabs
-                const parts = line.split(/\s{2,}|\t+/).filter((p: string) => p.trim())
-
-                if (parts.length >= 3) {
-                    // Heuristic:
-                    // 1. First part is likely Date
-                    // 2. Last part is likely Amount
-                    // 3. Everything in between is Description
-
-                    const dateVal = parts[0].trim()
-                    const amountVal = parts[parts.length - 1].trim()
-
-                    // Simple check if amount looks like a number
-                    if (/[0-9]/.test(amountVal)) {
-                        rows.push({
-                            'Date': dateVal,
-                            'Description': parts.slice(1, -1).join(' ').trim(),
-                            'Amount': amountVal
-                        })
+        // Structured output for transactions list
+        const model = genAI.getGenerativeModel({
+            model: GEN_AI_MODEL,
+            generationConfig: {
+                // responseMimeType: "application/json", // Some older models/keys struggle with enforced JSON mode on arrays directly, but Flash handles it well usually.
+                // Let's use loose JSON prompting for safety or Schema if we want strictness.
+                // Strict Schema for a LIST is cleaner:
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                        transactions: {
+                            type: SchemaType.ARRAY,
+                            items: {
+                                type: SchemaType.OBJECT,
+                                properties: {
+                                    Date: { type: SchemaType.STRING, description: "Transaction date in MM/DD/YYYY or YYYY-MM-DD format" },
+                                    Description: { type: SchemaType.STRING, description: "Transaction description or payee" },
+                                    Amount: { type: SchemaType.STRING, description: "Transaction amount (negative for debits/expenses, positive for credits/deposits usually, but just extract the number string)" }
+                                },
+                                required: ["Date", "Description", "Amount"]
+                            }
+                        }
                     }
                 }
             }
+        });
+
+        const prompt = `
+            Analyze this bank statement document. 
+            Extract all transactions found in the tabular data. 
+            Return them as a JSON object with a key 'transactions' containing an array.
+            For 'Amount', keep the original formatting (e.g., "-50.00" or "50.00 CR").
+        `;
+
+        const result = await model.generateContent([
+            prompt,
+            {
+                inlineData: {
+                    data: base64Data,
+                    mimeType: mimeType
+                }
+            }
+        ]);
+
+        const response = await result.response;
+        const text = response.text();
+        console.log("Gemini PDF Parse Response:", text.substring(0, 200) + "...");
+
+        const json = JSON.parse(text);
+
+        if (!json.transactions || !Array.isArray(json.transactions)) {
+            return { success: false, error: 'AI failed to extract a valid transaction list.' };
         }
 
-        if (rows.length === 0) {
-            return { success: false, error: 'Could not detect tabular transactions in PDF. Please ensure dates are clearly visible.' }
-        }
+        return { success: true, data: json.transactions };
 
-        return { success: true, data: rows }
     } catch (error: any) {
-        console.error('PDF Parse Error:', error)
-        return { success: false, error: 'Failed to parse PDF: ' + error.message }
+        console.error('PDF Parse Action Error:', error);
+        return { success: false, error: 'Failed to process PDF with AI: ' + error.message };
     }
 }
