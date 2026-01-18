@@ -30,9 +30,9 @@ export async function GET(request: Request) {
                 console.log(`OAuth Callback Debug: Now: ${now}, Diff: ${diff}`);
                 console.log(`OAuth Callback Debug: ADMIN_EMAIL: ${process.env.ADMIN_EMAIL}`);
 
-                // If created in the last 30 seconds (30000ms), consider it a new signup
-                // Increasing window to 60 seconds to be safe against clock skew
-                if (diff < 60000) {
+                // If created in the last 5 minutes (300000ms), consider it a new signup
+                // Increased window to handle potential clock skews between auth server and app server
+                if (diff < 300000) {
                     // Notify Admin
                     try {
                         const adminEmail = process.env.ADMIN_EMAIL
