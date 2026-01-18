@@ -38,17 +38,21 @@ export default async function Page() {
     const reportData = await getFinancialReport(thirtyDaysAgo, new Date())
     const recentTransactions = 'error' in reportData ? [] : reportData.transactions.slice(0, 5)
 
+    const isEmptyState = accountBalances.every(acc => acc.balance === 0) && recentTransactions.length === 0
+
     return (
       <DashboardShell>
         <div className="flex flex-col gap-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Welcome back, {user.user_metadata?.full_name?.split(' ')[0] || 'User'}</h1>
-              <p className="text-muted-foreground">Here&apos;s your financial overview.</p>
+          {!isEmptyState && (
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight">Welcome back, {user.user_metadata?.full_name?.split(' ')[0] || 'User'}</h1>
+                <p className="text-muted-foreground">Here&apos;s your financial overview.</p>
+              </div>
             </div>
-          </div>
+          )}
 
-          {accountBalances.every(acc => acc.balance === 0) && recentTransactions.length === 0 ? (
+          {isEmptyState ? (
             <EmptyDashboardState userName={user.user_metadata?.full_name?.split(' ')[0] || 'User'} />
           ) : (
             <>

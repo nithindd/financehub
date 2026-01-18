@@ -56,10 +56,11 @@ export function AccountCards({ accounts, currency = 'USD', locale = 'en-US' }: A
                                     {account.type === 'ASSET' ? 'Available Balance' : 'Outstanding Balance'}
                                 </p>
                                 {account.payment_methods && account.payment_methods.length > 0 && (
-                                    <div className="flex -space-x-2">
+                                    <div className="flex flex-col items-end gap-0.5 max-w-[50%]">
                                         {account.payment_methods.map(pm => (
-                                            <div key={pm.id} className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center border border-background" title={pm.name}>
-                                                <CreditCard className="w-3 h-3 text-primary" />
+                                            <div key={pm.id} className="text-[10px] text-muted-foreground flex items-center gap-1 justify-end truncate w-full">
+                                                <span className="truncate">{pm.name}</span>
+                                                <span className="font-mono opacity-70">...{pm.last_four}</span>
                                             </div>
                                         ))}
                                     </div>

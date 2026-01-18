@@ -127,7 +127,7 @@ export async function getAccounts() {
 
     const { data, error } = await supabase
         .from('accounts')
-        .select('*')
+        .select('*, payment_methods(*)')
         .order('name')
 
     if (error) {
@@ -136,6 +136,37 @@ export async function getAccounts() {
     }
 
     return data as Account[]
+}
+
+export async function updatePaymentMethod(
+    methodId: string,
+    name: string,
+    lastFour: string,
+    type: 'DEBIT_CARD' | 'CREDIT_CARD'
+) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    // Basic validation
+    if (!/^\d{4}$/.test(lastFour)) {
+        return { error: 'Last four digits must be exactly 4 numbers' }
+    }
+
+    const { error } = await supabase
+        .from('payment_methods')
+        .update({
+            name,
+            last_four: lastFour,
+            type
+        })
+        .eq('id', methodId)
+        .eq('user_id', user.id)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/settings/categories')
+    return { success: true }
 }
 
 export async function createAccount(name: string, type: AccountType): Promise<{ error: string } | { success: true, data: Account }> {

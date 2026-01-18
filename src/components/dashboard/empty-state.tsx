@@ -2,14 +2,18 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Wallet, PlusCircle, ArrowRight } from "lucide-react"
+import { Wallet, PlusCircle, ArrowRight, Plus } from "lucide-react"
 import Link from "next/link"
+import { useState } from "react"
+import { TransactionDialog } from "@/components/transaction-dialog"
 
 interface EmptyDashboardStateProps {
     userName: string
 }
 
 export function EmptyDashboardState({ userName }: EmptyDashboardStateProps) {
+    const [activeSheet, setActiveSheet] = useState<'scan' | 'manual' | 'upload' | null>(null)
+
     return (
         <div className="flex flex-col items-center justify-center py-12 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="text-center space-y-4 max-w-lg">
@@ -36,11 +40,11 @@ export function EmptyDashboardState({ userName }: EmptyDashboardStateProps) {
                                 Customize your chart of accounts to match your financial structure.
                             </p>
                         </div>
-                        <Link href="/settings/categories" className="w-full">
-                            <Button className="w-full" variant="outline">
+                        <Button className="w-full" variant="outline" asChild>
+                            <Link href="/settings/categories">
                                 Manage Accounts <ArrowRight className="w-4 h-4 ml-2" />
-                            </Button>
-                        </Link>
+                            </Link>
+                        </Button>
                     </CardContent>
                 </Card>
 
@@ -55,14 +59,19 @@ export function EmptyDashboardState({ userName }: EmptyDashboardStateProps) {
                                 Add your first transaction or import a statement to see insights.
                             </p>
                         </div>
-                        <Link href="/transactions" className="w-full">
-                            <Button className="w-full">
-                                Go to Transactions <ArrowRight className="w-4 h-4 ml-2" />
-                            </Button>
-                        </Link>
+                        <Button className="w-full" onClick={() => setActiveSheet('manual')}>
+                            Add Transaction <Plus className="w-4 h-4 ml-2" />
+                        </Button>
                     </CardContent>
                 </Card>
             </div>
+
+            <TransactionDialog
+                open={activeSheet === 'manual'}
+                onOpenChange={(open) => !open && setActiveSheet(null)}
+            >
+                <span className="hidden"></span>
+            </TransactionDialog>
         </div>
     )
 }

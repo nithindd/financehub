@@ -19,6 +19,7 @@ export interface TransactionInput {
     items?: any[]
     currency?: string
     exchangeRate?: number
+    paymentMethodId?: string
 }
 
 export async function createTransaction(input: TransactionInput) {
@@ -62,7 +63,8 @@ export async function createTransaction(input: TransactionInput) {
             items: input.items || [],
             original_currency: currency,
             original_amount: originalAmount,
-            exchange_rate: exchangeRate
+            exchange_rate: exchangeRate,
+            payment_method_id: input.paymentMethodId || null
         })
         .select()
         .single()
@@ -143,7 +145,8 @@ export async function updateTransaction(id: string, input: TransactionInput) {
             evidence_path: input.evidencePath,
             parent_id: input.parentId,
             vendor: input.vendor,
-            items: input.items || []
+            items: input.items || [],
+            payment_method_id: input.paymentMethodId || null
         })
         .eq('id', id)
         .eq('user_id', user.id)
