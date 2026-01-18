@@ -150,7 +150,7 @@ export default async function Page() {
             <Link href="/signin">
               <Button variant="ghost">Sign In</Button>
             </Link>
-            <Link href="/signin">
+            <Link href="/signup">
               <Button>Get Started</Button>
             </Link>
           </div>
@@ -285,7 +285,7 @@ export default async function Page() {
             <p className="mx-auto max-w-2xl text-lg text-primary-foreground/80 mb-10">
               Join thousands of users who have switched to FinanceHub for smarter, faster accounting.
             </p>
-            <Link href="/login">
+            <Link href="/signup">
               <Button size="lg" variant="secondary" className="h-14 px-10 text-lg font-semibold">
                 Create Free Account
               </Button>

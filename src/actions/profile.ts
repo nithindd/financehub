@@ -73,10 +73,47 @@ export async function getUserProfile() {
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
     if (error) {
+        console.error('Profile fetch error:', error)
         return { error: error.message }
+    }
+
+    // If no profile exists, create a default one
+    if (!profile) {
+        const defaultUsername = user.email?.split('@')[0] || 'user'
+        const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert({
+                id: user.id,
+                username: defaultUsername,
+                updated_at: new Date().toISOString()
+            })
+            .select()
+            .single()
+
+        if (createError) {
+            console.error('Profile creation error:', createError)
+            // Return basic profile data even if creation fails
+            return {
+                profile: {
+                    id: user.id,
+                    username: defaultUsername,
+                    first_name: null,
+                    last_name: null,
+                    email: user.email,
+                    updated_at: new Date().toISOString()
+                }
+            }
+        }
+
+        return {
+            profile: {
+                ...newProfile,
+                email: user.email
+            }
+        }
     }
 
     return {
