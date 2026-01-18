@@ -6,10 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, CreditCard } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { AddAccountDialog } from '@/components/accounts/add-account-dialog'
+import { Badge } from '@/components/ui/badge'
 
 interface CategoriesClientProps {
     initialAccounts: Account[]
@@ -21,8 +22,6 @@ export function CategoriesClient({ initialAccounts }: CategoriesClientProps) {
     const [isEditOpen, setIsEditOpen] = React.useState(false)
     const [editingAccount, setEditingAccount] = React.useState<Account | null>(null)
 
-    const [newName, setNewName] = React.useState('')
-    const [newType, setNewType] = React.useState<AccountType>('EXPENSE')
     const [editName, setEditName] = React.useState('')
     const [isSubmitting, setIsSubmitting] = React.useState(false)
 
@@ -31,24 +30,6 @@ export function CategoriesClient({ initialAccounts }: CategoriesClientProps) {
         EXPENSE: initialAccounts.filter(a => a.type === 'EXPENSE'),
         ASSET: initialAccounts.filter(a => a.type === 'ASSET'),
         LIABILITY: initialAccounts.filter(a => a.type === 'LIABILITY')
-    }
-
-    const handleAdd = async (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!newName.trim()) return
-
-        setIsSubmitting(true)
-        const result = await createAccount(newName.trim(), newType)
-        setIsSubmitting(false)
-
-        if (result.error) {
-            alert('Failed to create category: ' + result.error)
-        } else {
-            setNewName('')
-            setNewType('EXPENSE')
-            setIsAddOpen(false)
-            router.refresh()
-        }
     }
 
     const handleEdit = async (e: React.FormEvent) => {
@@ -95,10 +76,24 @@ export function CategoriesClient({ initialAccounts }: CategoriesClientProps) {
                             <CardDescription>{accts.length} categories</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-2">
+                            <div className="space-y-4">
                                 {accts.map(account => (
-                                    <div key={account.id} className="flex items-center justify-between p-3 border rounded-lg">
-                                        <span className="font-medium">{account.name}</span>
+                                    <div key={account.id} className="flex items-start justify-between p-3 border rounded-lg bg-card text-card-foreground shadow-sm">
+                                        <div className="space-y-1">
+                                            <div className="font-medium flex items-center gap-2">
+                                                {account.name}
+                                            </div>
+                                            {account.payment_methods && account.payment_methods.length > 0 && (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {account.payment_methods.map(pm => (
+                                                        <Badge key={pm.id} variant="secondary" className="text-xs font-normal">
+                                                            <CreditCard className="w-3 h-3 mr-1" />
+                                                            {pm.name} (...{pm.last_four})
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
                                         <div className="flex gap-2">
                                             <Button
                                                 variant="ghost"
@@ -133,55 +128,13 @@ export function CategoriesClient({ initialAccounts }: CategoriesClientProps) {
                     <CardContent className="flex flex-col items-center justify-center py-10">
                         <Button onClick={() => setIsAddOpen(true)}>
                             <Plus className="h-4 w-4 mr-2" />
-                            Add New Category
+                            Add New Account
                         </Button>
                     </CardContent>
                 </Card>
             </div>
 
-            {/* Add Dialog */}
-            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Add New Category</DialogTitle>
-                        <DialogDescription>Create a new account category</DialogDescription>
-                    </DialogHeader>
-                    <form onSubmit={handleAdd} className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="name">Category Name</Label>
-                            <Input
-                                id="name"
-                                value={newName}
-                                onChange={(e) => setNewName(e.target.value)}
-                                placeholder="e.g., Groceries, Salary"
-                                required
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="type">Type</Label>
-                            <Select value={newType} onValueChange={(v) => setNewType(v as AccountType)}>
-                                <SelectTrigger id="type">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="INCOME">Income</SelectItem>
-                                    <SelectItem value="EXPENSE">Expense</SelectItem>
-                                    <SelectItem value="ASSET">Asset</SelectItem>
-                                    <SelectItem value="LIABILITY">Liability</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>
-                                Cancel
-                            </Button>
-                            <Button type="submit" disabled={isSubmitting}>
-                                {isSubmitting ? 'Creating...' : 'Create'}
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+            <AddAccountDialog open={isAddOpen} onOpenChange={setIsAddOpen} />
 
             {/* Edit Dialog */}
             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>

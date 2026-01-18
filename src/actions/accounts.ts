@@ -3,12 +3,15 @@
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+import { PaymentMethod } from '@/types/accounts'
+
 export type AccountType = 'ASSET' | 'LIABILITY' | 'EQUITY' | 'INCOME' | 'EXPENSE'
 
 export interface Account {
     id: string
     name: string
     type: AccountType
+    payment_methods?: PaymentMethod[]
 }
 
 export interface AccountBalance extends Account {
@@ -135,7 +138,7 @@ export async function getAccounts() {
     return data as Account[]
 }
 
-export async function createAccount(name: string, type: AccountType) {
+export async function createAccount(name: string, type: AccountType): Promise<{ error: string } | { success: true, data: Account }> {
     const supabase = await createClient()
 
     const { data: { user } } = await supabase.auth.getUser()
@@ -143,20 +146,22 @@ export async function createAccount(name: string, type: AccountType) {
         return { error: 'Unauthorized' }
     }
 
-    const { error } = await supabase
+    const { data, error } = await supabase
         .from('accounts')
         .insert({
             name,
             type,
             user_id: user.id
         })
+        .select()
+        .single()
 
     if (error) {
         return { error: error.message }
     }
 
     revalidatePath('/')
-    return { success: true }
+    return { success: true, data }
 }
 
 export async function seedDefaultAccounts() {

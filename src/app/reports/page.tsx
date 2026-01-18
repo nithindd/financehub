@@ -1,4 +1,5 @@
 import { getFinancialReport } from '@/actions/reports'
+import { getAccounts } from '@/actions/accounts'
 import { ReportFilters } from '@/components/reports/report-filters'
 import { ReportSummary } from '@/components/reports/report-summary'
 import { TransactionTable } from '@/components/reports/transaction-table'
@@ -6,6 +7,8 @@ import { ExportActions } from '@/components/reports/export-actions'
 import { startOfMonth, endOfMonth } from 'date-fns'
 import { createClient } from '@/utils/supabase/server'
 import { DashboardShell } from '@/components/layout/dashboard-shell'
+
+// ... existing imports
 
 // Server Component
 export default async function ReportsPage({
@@ -34,12 +37,16 @@ export default async function ReportsPage({
 
     const startDateStr = (params.start as string) || defaultStart
     const endDateStr = (params.end as string) || defaultEnd
+    const accountId = params.accountId as string | undefined
+    const type = params.type as string | undefined
 
     const startDate = new Date(startDateStr)
     const endDate = new Date(endDateStr)
 
-    // Fetch data
-    const reportData = await getFinancialReport(startDate, endDate)
+    const [reportData, accounts] = await Promise.all([
+        getFinancialReport(startDate, endDate, accountId, type),
+        getAccounts()
+    ])
 
     if ('error' in reportData) {
         return (
@@ -57,7 +64,7 @@ export default async function ReportsPage({
                     <p className="text-muted-foreground">View and export your transaction history.</p>
                 </div>
 
-                <ReportFilters />
+                <ReportFilters accounts={accounts} />
 
                 <ReportSummary summary={reportData.summary} />
 

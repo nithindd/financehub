@@ -1,27 +1,34 @@
 'use server'
 
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
+import { createClient } from '@/utils/supabase/server'
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
 
 const GEN_AI_MODEL = "gemini-3-flash-preview";
 
+// ... existing imports
+
 export async function processInvoice(formData: FormData) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { error: 'Unauthorized' }
+    }
+
     const file = formData.get('file') as File;
     console.log("OCR Action: Started processing");
 
     if (!file) {
-        console.error("OCR Error: No file provided in FormData");
         return { error: 'No file provided' };
     }
 
-    // Debug logging (masked key)
+    // ... existing key check ...
     const key = process.env.GOOGLE_API_KEY;
-    console.log(`OCR Action: Checking API Key. Present: ${!!key}, Length: ${key ? key.length : 0}`);
-
     if (!key) {
-        console.error('OCR Error: GOOGLE_API_KEY is missing from process.env');
-        return { error: 'Server configuration error: GOOGLE_API_KEY missing. Please check .env.local and restart server.' };
+        console.error('OCR Error: GOOGLE_API_KEY is missing');
+        return { error: 'Server configuration error' };
     }
 
     try {
@@ -30,7 +37,6 @@ export async function processInvoice(formData: FormData) {
         const base64Image = buffer.toString('base64');
         const mimeType = file.type;
 
-        // Using structured output for higher reliability
         const model = genAI.getGenerativeModel({
             model: GEN_AI_MODEL,
             generationConfig: {
@@ -43,14 +49,15 @@ export async function processInvoice(formData: FormData) {
                         totalAmount: { type: SchemaType.NUMBER, description: "Total amount on the invoice" },
                         tax: { type: SchemaType.NUMBER, description: "Total tax amount found on invoice" },
                         tip: { type: SchemaType.NUMBER, description: "Tip/gratuity amount if present" },
+                        cardLastFour: { type: SchemaType.STRING, description: "Last 4 digits of credit/debit card if visible" },
                         items: {
                             type: SchemaType.ARRAY,
-                            description: "List of individual line items, products, or charges",
+                            description: "List of individual line items",
                             items: {
                                 type: SchemaType.OBJECT,
                                 properties: {
-                                    description: { type: SchemaType.STRING, description: "Name/description of the product or service" },
-                                    amount: { type: SchemaType.NUMBER, description: "Price/amount for this item" }
+                                    description: { type: SchemaType.STRING, description: "Item description" },
+                                    amount: { type: SchemaType.NUMBER, description: "Item price" }
                                 },
                                 required: ["description", "amount"]
                             }
@@ -61,24 +68,42 @@ export async function processInvoice(formData: FormData) {
             }
         });
 
-
-        const prompt = "Analyze this invoice/receipt image and extract metadata. Extract the total tax amount explicitly. If you find multiple line items, list them in the 'items' array. Do not include tax in individual item prices unless it's not listed separately.";
+        const prompt = "Analyze this invoice/receipt. Extract date, vendor, total, tax, tip, and line items. Critically, look for the 'Last 4 digits' of the payment card (often marked as *************1234 or Account: 1234).";
 
         const result = await model.generateContent([
             prompt,
-            {
-                inlineData: {
-                    data: base64Image,
-                    mimeType: mimeType
-                }
-            }
+            { inlineData: { data: base64Image, mimeType: mimeType } }
         ]);
 
         const response = await result.response;
         const text = response.text();
         console.log("Gemini OCR Response:", text);
+        const parsedData = JSON.parse(text);
 
-        return { data: JSON.parse(text) };
+        // MATCHING LOGIC
+        if (parsedData.cardLastFour) {
+            // Remove any non-digit chars just in case
+            const lastFour = parsedData.cardLastFour.replace(/\D/g, '');
+
+            if (lastFour.length === 4) {
+                const { data: methods } = await supabase
+                    .from('payment_methods')
+                    .select('account_id, id, name')
+                    .eq('user_id', user.id)
+                    .eq('last_four', lastFour)
+
+                if (methods && methods.length > 0) {
+                    console.log(`OCR Match: Found linked account for card ...${lastFour}`);
+                    parsedData.matchedAccount = {
+                        accountId: methods[0].account_id,
+                        paymentMethodId: methods[0].id,
+                        methodName: methods[0].name
+                    };
+                }
+            }
+        }
+
+        return { data: parsedData };
     } catch (error: any) {
         console.error('OCR Action Error:', error);
         return { error: error.message || 'Failed to process image' };

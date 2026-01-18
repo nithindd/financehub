@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowUpRight, ArrowDownLeft, Wallet, CreditCard, Building2, PiggyBank } from "lucide-react"
 import { AccountBalance } from "@/actions/accounts"
 import { cn } from "@/lib/utils"
+import Link from 'next/link'
 
 interface AccountCardsProps {
     accounts: AccountBalance[]
@@ -33,30 +34,38 @@ export function AccountCards({ accounts }: AccountCardsProps) {
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {displayAccounts.map((account) => (
-                <Card key={account.id} className="relative overflow-hidden transition-all hover:shadow-md">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium flex items-center gap-2">
-                            {getIcon(account.name, account.type)}
-                            {account.name}
-                        </CardTitle>
-                        {/* Optional: Add badge or percent change if we had historical data */}
-                    </CardHeader>
-                    <CardContent>
-                        <div className={cn(
-                            "text-2xl font-bold",
-                            account.balance < 0 && account.type === 'ASSET' ? "text-destructive" : "", // Overdrawn Asset
-                            // Liabilities are normally positive number representing debt, but logically negative net worth.
-                            // However, in our balance func: Liability Balance = Credit - Debit. 
-                            // So a positive balance means we OWE money. 
-                        )}>
-                            {currencyFormatter.format(account.balance)}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            {account.type === 'ASSET' ? 'Available Balance' : 'Outstanding Balance'}
-                        </p>
-
-                    </CardContent>
-                </Card>
+                <Link href={`/reports?accountId=${account.id}`} key={account.id}>
+                    <Card className="relative overflow-hidden transition-all hover:shadow-md hover:border-primary cursor-pointer h-full">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium flex items-center gap-2">
+                                {getIcon(account.name, account.type)}
+                                {account.name}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className={cn(
+                                "text-2xl font-bold",
+                                account.balance < 0 && account.type === 'ASSET' ? "text-destructive" : "",
+                            )}>
+                                {currencyFormatter.format(account.balance)}
+                            </div>
+                            <div className="flex justify-between items-center mt-1">
+                                <p className="text-xs text-muted-foreground">
+                                    {account.type === 'ASSET' ? 'Available Balance' : 'Outstanding Balance'}
+                                </p>
+                                {account.payment_methods && account.payment_methods.length > 0 && (
+                                    <div className="flex -space-x-2">
+                                        {account.payment_methods.map(pm => (
+                                            <div key={pm.id} className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center border border-background" title={pm.name}>
+                                                <CreditCard className="w-3 h-3 text-primary" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </Link>
             ))}
 
             {/* Add Card Placeholder */}

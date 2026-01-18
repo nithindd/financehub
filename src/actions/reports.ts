@@ -33,7 +33,12 @@ export interface FinancialReport {
     transactions: ReportTransaction[]
 }
 
-export async function getFinancialReport(startDate: Date, endDate: Date): Promise<FinancialReport | { error: string }> {
+export async function getFinancialReport(
+    startDate: Date,
+    endDate: Date,
+    accountId?: string,
+    type?: string
+): Promise<FinancialReport | { error: string }> {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -43,11 +48,6 @@ export async function getFinancialReport(startDate: Date, endDate: Date): Promis
     const formattedEnd = endDate.toISOString().split('T')[0]
 
     // Fetch transactions with their journal entries and account details
-    // We need to determine the "Main" aspect of the transaction.
-    // In a simple double entry:
-    // Expense = Credit Asset (Bank) + Debit Expense (Category) -> We want the Debit side for the category.
-    // Income = Debit Asset (Bank) + Credit Income (Category) -> We want the Credit side for the category.
-
     const { data, error } = await supabase
         .from('transactions')
         .select(`
@@ -60,6 +60,7 @@ export async function getFinancialReport(startDate: Date, endDate: Date): Promis
             journal_entries (
                 amount,
                 entry_type,
+                account_id,
                 accounts (
                     name,
                     type
@@ -79,7 +80,22 @@ export async function getFinancialReport(startDate: Date, endDate: Date): Promis
     let totalExpenses = 0
     const reportTransactions: ReportTransaction[] = []
 
-    data.forEach((tx: any) => {
+    const filteredData = data.filter((tx: any) => {
+        if (!accountId && !type) return true
+
+        // Check if any journal entry matches the filter
+        return tx.journal_entries.some((entry: any) => {
+            if (accountId && accountId !== 'all') {
+                if (entry.account_id !== accountId) return false
+            }
+            if (type && type !== 'all') {
+                if (entry.accounts.type !== type) return false
+            }
+            return true
+        })
+    })
+
+    filteredData.forEach((tx: any) => {
         // Classify transaction based on its entries
         // We look for the "Reason" entry (Income or Expense account)
 
