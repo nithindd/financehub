@@ -14,7 +14,6 @@ import { getUserProfile, updateProfile, enable2FA, verify2FA, disable2FA, get2FA
 import { updatePassword } from '@/actions/auth'
 import { PasswordStrengthIndicator } from '@/components/password-strength-indicator'
 import { UsernameInput } from '@/components/username-input'
-import { TimezoneForm } from '@/components/profile/timezone-form'
 import QRCode from 'qrcode'
 import { deleteUserAccount } from '@/actions/user'
 import { DashboardShell } from '@/components/layout/dashboard-shell'
@@ -464,7 +463,11 @@ export default function ProfilePage() {
                                 <CardDescription>Customize your FinanceHub experience</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
-                                <TimezoneForm initialTimezone="UTC" />
+                                <PreferencesForm
+                                    initialTimezone={profile?.timezone || 'UTC'}
+                                    initialCurrency={profile?.currency || 'USD'}
+                                    initialLocale={profile?.locale || 'en-US'}
+                                />
                             </CardContent>
                         </Card>
 
