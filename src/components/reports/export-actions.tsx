@@ -24,6 +24,7 @@ export function ExportActions({ data, summary, startDate, endDate, defaultEmail 
             t.journalEntries.map(e => ({
                 Date: new Date(t.date).toLocaleDateString(),
                 Transaction: t.description,
+                Vendor: t.vendor || '',
                 Account: e.accountName,
                 AccountType: e.accountType,
                 EntryType: e.type,
@@ -58,9 +59,10 @@ export function ExportActions({ data, summary, startDate, endDate, defaultEmail 
         let y = 40
         doc.setFontSize(10)
         doc.text("Date", 14, y)
-        doc.text("Description", 40, y)
-        doc.text("Account", 100, y)
-        doc.text("Amount", 160, y)
+        doc.text("Description", 35, y)
+        doc.text("Vendor", 85, y)
+        doc.text("Account", 115, y)
+        doc.text("Amount", 170, y)
 
         y += 5
         doc.line(14, y, 190, y)
@@ -77,14 +79,17 @@ export function ExportActions({ data, summary, startDate, endDate, defaultEmail 
                 if (index === 0) {
                     doc.setFont("helvetica", "bold")
                     doc.text(new Date(t.date).toLocaleDateString(), 14, y)
-                    const desc = t.description.length > 30 ? t.description.substring(0, 27) + "..." : t.description
-                    doc.text(desc, 40, y)
+                    const desc = t.description.length > 25 ? t.description.substring(0, 22) + "..." : t.description
+                    doc.text(desc, 35, y)
+
                     doc.setFont("helvetica", "normal")
+                    const vendor = t.vendor ? (t.vendor.length > 15 ? t.vendor.substring(0, 12) + "..." : t.vendor) : "-"
+                    doc.text(vendor, 85, y)
                 }
 
-                doc.text(e.accountName, 100, y)
+                doc.text(e.accountName, 115, y)
                 const amountText = e.type === 'CREDIT' ? `(${e.amount.toFixed(2)})` : e.amount.toFixed(2)
-                doc.text(amountText, 160, y, { align: 'right' })
+                doc.text(amountText, 170, y, { align: 'right' })
                 y += 7
             })
             y += 2 // Extra space between transactions

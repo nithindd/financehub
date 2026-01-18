@@ -53,6 +53,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                             <th className="h-12 w-10 px-4"></th>
                             <th className="h-12 px-4 font-medium text-muted-foreground">Date</th>
                             <th className="h-12 px-4 font-medium text-muted-foreground">Description</th>
+                            <th className="h-12 px-4 font-medium text-muted-foreground hidden md:table-cell">Vendor</th>
                             <th className="h-12 px-4 font-medium text-muted-foreground hidden md:table-cell">Category</th>
                             <th className="h-12 px-4 font-medium text-muted-foreground hidden md:table-cell">Type</th>
                             <th className="h-12 px-4 font-medium text-muted-foreground text-right">Amount</th>
@@ -83,6 +84,9 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                                                 <Layers className="h-3 w-3 text-muted-foreground/50" />
                                             )}
                                         </div>
+                                    </td>
+                                    <td className="p-4 align-middle hidden md:table-cell">
+                                        <span className="text-muted-foreground">{tx.vendor || '-'}</span>
                                     </td>
                                     <td className="p-4 align-middle hidden md:table-cell">
                                         <span className="text-muted-foreground">{tx.category}</span>

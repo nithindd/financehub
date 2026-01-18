@@ -32,6 +32,7 @@ export async function getVendorSpend(startDate?: Date, endDate?: Date): Promise<
         .from('transactions')
         .select(`
             description,
+            vendor,
             date,
             journal_entries!inner (
                 amount,
@@ -56,19 +57,17 @@ export async function getVendorSpend(startDate?: Date, endDate?: Date): Promise<
         return []
     }
 
-    // Aggregate by description (Vendor)
+    // Aggregate by Vendor column if available, else description
     const vendorMap = new Map<string, number>()
 
     data.forEach((tx: any) => {
-        // Clean description to get vendor name (simple heuristic)
-        // If description is "Amazon - Office Supplies", maybe just take "Amazon"?
-        // For now, take full description as the vendor name
-        const vendor = tx.description.trim()
+        // Use vendor column if available, otherwise heuristic from description
+        const vendorName = tx.vendor ? tx.vendor : tx.description.trim()
 
         // Sum debit amounts for expense accounts
         const amount = tx.journal_entries.reduce((sum: number, entry: any) => sum + parseFloat(entry.amount), 0)
 
-        vendorMap.set(vendor, (vendorMap.get(vendor) || 0) + amount)
+        vendorMap.set(vendorName, (vendorMap.get(vendorName) || 0) + amount)
     })
 
     // Convert to array and sort

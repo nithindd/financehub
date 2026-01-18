@@ -13,6 +13,7 @@ export interface ReportTransaction {
     id: string
     date: string
     description: string
+    vendor?: string // Added vendor field
     amount: number
     type: 'INCOME' | 'EXPENSE' | 'TRANSFER'
     category: string // Account name
@@ -53,6 +54,7 @@ export async function getFinancialReport(startDate: Date, endDate: Date): Promis
             id,
             date,
             description,
+            vendor,
             evidence_path,
             parent_id,
             journal_entries (
@@ -110,6 +112,7 @@ export async function getFinancialReport(startDate: Date, endDate: Date): Promis
             id: tx.id,
             date: tx.date,
             description: tx.description,
+            vendor: tx.vendor,
             amount: amount,
             type: type,
             category: category,
