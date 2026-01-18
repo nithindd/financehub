@@ -26,7 +26,7 @@ The application follows a modern serverless architecture:
 ### 🤖 AI-Powered Automation
 - **Smart Invoice Scanning**: Upload photos or PDFs → Auto-extract date, vendor, amount (Google Gemini)
 - **Vendor Auto-Categorization**: Map vendor names to categories (e.g., "Walmart" → "Groceries")
-- **Statement Import**: Parse CSV/PDF bank statements with column mapping
+- **Intelligent Statement Import**: Parse CSV or PDF bank statements using Gemini 2.0 AI. Automatically detects dates, amounts, and duplicate transactions.
 
 ### 📱 Modern UX
 - **Mobile-First**: Responsive design, PWA-ready, camera integration for invoice scanning
@@ -83,8 +83,8 @@ Visit `http://localhost:3000`
 
 ### Creating Transactions
 1. **Manual Entry**: Click "New Transaction" → Add journal entries → Ensure debits = credits
-2. **Invoice Scan**: Click "Scan Invoice" → Upload photo/PDF → Review auto-filled data
-3. **Statement Import**: Click "Upload Statement" → Upload CSV/PDF → Map columns → Import
+2. **Invoice Scan**: Click "Scan Invoice" → Upload photo/PDF → AI extracts line items, tax, and tips
+3. **Statement Import**: Click "Upload Statement" → Upload CSV/PDF → AI extracts transactions → Map columns
 
 ### Managing Categories
 1. Go to **Profile → Manage Categories**
@@ -117,7 +117,7 @@ Visit `http://localhost:3000`
 | **Email** | Resend |
 | **Styling** | Tailwind CSS v4 |
 | **UI Components** | Shadcn UI |
-| **PDF Parsing** | pdf-parse, jsPDF |
+| **PDF Parsing** | Gemini 2.0 Flash Exp (AI Extraction) |
 | **CSV Parsing** | PapaParse |
 
 ## 📁 Project Structure

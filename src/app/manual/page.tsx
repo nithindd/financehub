@@ -46,7 +46,7 @@ export default async function ManualPage() {
                                     </div>
                                     <div>
                                         <h4 className="font-semibold">How to use:</h4>
-                                        <p className="text-xs text-muted-foreground">Click "Scan Invoice" on the dashboard. Upload a photo or PDF of your receipt. FinanceHub will identify the vendor, amount, date, and tax automatically.</p>
+                                        <p className="text-xs text-muted-foreground">Click "Scan Invoice" on the dashboard. Upload a photo or PDF. Our AI now extracts individual line items, tax, and tips automatically, saving you from manual splitting.</p>
                                     </div>
                                 </section>
                             </div>
@@ -70,8 +70,8 @@ export default async function ManualPage() {
                                     <h4 className="mb-2 text-sm font-semibold">Statement Features:</h4>
                                     <ul className="list-inside list-disc space-y-1 text-xs text-muted-foreground">
                                         <li>Supports CSV uploads</li>
-                                        <li>Custom column mapping (Date, Payee, Amount)</li>
-                                        <li>Automatic duplicate detection</li>
+                                        <li><strong>New:</strong> AI PDF Statement Parsing</li>
+                                        <li>Smart duplicate detection with warnings</li>
                                         <li>Background vendor matching</li>
                                     </ul>
                                 </div>
