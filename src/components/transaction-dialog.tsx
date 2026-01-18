@@ -63,6 +63,7 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
     }, [open, defaultOpenOcr])
 
     const [date, setDate] = useState<Date | undefined>(new Date())
+    const [vendor, setVendor] = useState('')
     const [description, setDescription] = useState('')
     const [rows, setRows] = useState<JournalEntryRow[]>([
         { accountId: '', type: 'DEBIT', amount: '' },
@@ -202,7 +203,7 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
                 // Switch to edit mode to show the form with populated data
                 setMode('edit')
 
-                if (vendor) setDescription(vendor)
+                if (vendor) setVendor(vendor)
 
 
                 // Find potential accounts
@@ -268,6 +269,7 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
                                 checkPossibleDuplicate({
                                     date: localDate,
                                     amount: typeof checkAmount === 'string' ? parseFloat(checkAmount) : checkAmount,
+
                                     description: vendor || ''
                                 }).then(dupes => {
                                     if (dupes.length > 0) {
@@ -323,7 +325,7 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
                 ],
                 // Only first transaction gets the evidence path
                 evidencePath: index === 0 ? (evidencePath || undefined) : undefined,
-                vendor: description,
+                vendor: vendor,
                 items: lineItems,
                 currency,
                 exchangeRate: parseFloat(exchangeRate),
@@ -348,7 +350,7 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
                     amount: parseFloat(r.amount)
                 })),
                 evidencePath: evidencePath || undefined,
-                vendor: description,
+                vendor: vendor,
                 items: lineItems,
                 currency,
                 exchangeRate: parseFloat(exchangeRate),
@@ -365,6 +367,7 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
     }
 
     const resetForm = () => {
+        setVendor('')
         setDescription('')
         setDate(new Date())
         setEvidencePath(null)
@@ -488,6 +491,18 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
                                 <div className="sm:col-span-3">
                                     <DatePicker date={date} setDate={setDate} />
                                 </div>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                                <Label htmlFor="vendor" className="sm:text-right">
+                                    Vendor
+                                </Label>
+                                <Input
+                                    id="vendor"
+                                    value={vendor}
+                                    placeholder="e.g. Home Depot (Optional)"
+                                    onChange={(e) => setVendor(e.target.value)}
+                                    className="sm:col-span-3"
+                                />
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
                                 <Label htmlFor="description" className="sm:text-right">
