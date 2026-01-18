@@ -147,10 +147,10 @@ export default async function Page() {
             <span>FinanceHub</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/login">
+            <Link href="/signin">
               <Button variant="ghost">Sign In</Button>
             </Link>
-            <Link href="/login">
+            <Link href="/signin">
               <Button>Get Started</Button>
             </Link>
           </div>
@@ -168,7 +168,7 @@ export default async function Page() {
               Stop manually typing receipts. FinanceHub uses advanced AI to extract line items, categorize expenses, and generate professional financial reports in seconds.
             </p>
             <div className="flex justify-center gap-4">
-              <Link href="/login">
+              <Link href="/signin">
                 <Button size="lg" className="h-12 px-8 text-lg gap-2">
                   Start for Free <ArrowRight className="h-5 w-5" />
                 </Button>

@@ -7,6 +7,7 @@ import { jsPDF } from "jspdf"
 import Papa from "papaparse"
 import { ReportTransaction } from "@/actions/reports"
 import { EmailReportDialog } from "./email-report-dialog"
+import { createClient } from "@/utils/supabase/client"
 
 interface ExportActionsProps {
     data: ReportTransaction[]
@@ -93,6 +94,18 @@ export function ExportActions({ data, summary, startDate, endDate, defaultEmail 
     }
 
     const [emailDialogOpen, setEmailDialogOpen] = React.useState(false)
+    const [userEmail, setUserEmail] = React.useState<string>("")
+
+    React.useEffect(() => {
+        const getUser = async () => {
+            const supabase = createClient()
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user?.email) {
+                setUserEmail(user.email)
+            }
+        }
+        getUser()
+    }, [])
 
     return (
         <div className="flex gap-2">
@@ -110,10 +123,10 @@ export function ExportActions({ data, summary, startDate, endDate, defaultEmail 
                 open={emailDialogOpen}
                 onOpenChange={setEmailDialogOpen}
                 data={data}
-                summary={undefined} // passed down or calculated? It's not in props currently. will fix 
+                summary={summary}
                 startDate={startDate}
                 endDate={endDate}
-                defaultEmail={undefined} // Need to pass this in props
+                defaultEmail={userEmail}
             />
         </div>
     )
