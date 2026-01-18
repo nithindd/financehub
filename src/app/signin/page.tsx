@@ -9,13 +9,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { ShieldCheck, AlertCircle, Loader2 } from 'lucide-react'
+import { ShieldCheck, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react'
 
 export default function SignInPage() {
     const [email, setEmail] = React.useState('')
     const [password, setPassword] = React.useState('')
     const [error, setError] = React.useState('')
     const [loading, setLoading] = React.useState(false)
+    const [showPassword, setShowPassword] = React.useState(false)
 
     const handleEmailSignIn = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -85,13 +86,23 @@ export default function SignInPage() {
                                     Forgot password?
                                 </Link>
                             </div>
-                            <Input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                            />
+                            <div className="relative">
+                                <Input
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    className="pr-10"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                >
+                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </button>
+                            </div>
                         </div>
 
                         <Button type="submit" className="w-full" disabled={loading}>
