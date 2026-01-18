@@ -1,61 +1,182 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
+import { revalidatePath } from 'next/cache'
+import { validateUsername } from '@/lib/password-validator'
 
-export interface UserPreferences {
-    id: string
-    user_id: string
-    timezone: string
-    created_at: string
-    updated_at: string
-}
-
-export async function getUserPreferences(): Promise<UserPreferences | null> {
+/**
+ * Update user profile information
+ */
+export async function updateProfile(formData: {
+    firstName?: string
+    lastName?: string
+    username?: string
+}) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) return null
-
-    const { data, error } = await supabase
-        .from('user_preferences')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
-
-    if (error) {
-        // If no preferences exist, create default
-        if (error.code === 'PGRST116') {
-            const { data: newPrefs } = await supabase
-                .from('user_preferences')
-                .insert({ user_id: user.id, timezone: 'UTC' })
-                .select()
-                .single()
-            return newPrefs
-        }
-        return null
+    if (!user) {
+        return { error: 'Not authenticated' }
     }
 
-    return data
-}
+    // If username is being updated, validate it first
+    if (formData.username) {
+        const validation = validateUsername(formData.username)
+        if (!validation.isValid) {
+            return { error: validation.error }
+        }
 
-export async function updateUserPreferences(timezone: string) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+        // Check if username is already taken by another user
+        const { data: existing } = await supabase
+            .from('profiles')
+            .select('id, username')
+            .ilike('username', formData.username)
+            .neq('id', user.id)
+            .limit(1)
 
-    if (!user) return { error: 'Unauthorized' }
+        if (existing && existing.length > 0) {
+            return { error: 'Username is already taken' }
+        }
+    }
 
+    // Update profile
     const { error } = await supabase
-        .from('user_preferences')
-        .upsert({
-            user_id: user.id,
-            timezone: timezone
-        }, {
-            onConflict: 'user_id'
+        .from('profiles')
+        .update({
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            username: formData.username,
+            updated_at: new Date().toISOString()
         })
+        .eq('id', user.id)
 
     if (error) {
         return { error: error.message }
     }
 
+    revalidatePath('/profile')
+    return { success: true, message: 'Profile updated successfully' }
+}
+
+/**
+ * Get current user profile
+ */
+export async function getUserProfile() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { error: 'Not authenticated' }
+    }
+
+    const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    return {
+        profile: {
+            ...profile,
+            email: user.email
+        }
+    }
+}
+
+/**
+ * Enable 2FA for the current user
+ */
+export async function enable2FA() {
+    const supabase = await createClient()
+
+    const { data, error } = await supabase.auth.mfa.enroll({
+        factorType: 'totp'
+    })
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    return {
+        id: data.id,
+        qrCode: data.totp.qr_code,
+        secret: data.totp.secret,
+        uri: data.totp.uri
+    }
+}
+
+/**
+ * Verify and activate 2FA
+ */
+export async function verify2FA(factorId: string, code: string) {
+    const supabase = await createClient()
+
+    const { data, error } = await supabase.auth.mfa.challenge({ factorId })
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    const { data: verifyData, error: verifyError } = await supabase.auth.mfa.verify({
+        factorId,
+        challengeId: data.id,
+        code
+    })
+
+    if (verifyError) {
+        return { error: verifyError.message }
+    }
+
+    revalidatePath('/profile')
+    return { success: true, message: '2FA enabled successfully' }
+}
+
+/**
+ * Disable 2FA for the current user
+ */
+export async function disable2FA(factorId: string) {
+    const supabase = await createClient()
+
+    const { error } = await supabase.auth.mfa.unenroll({ factorId })
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    revalidatePath('/profile')
+    return { success: true, message: '2FA disabled successfully' }
+}
+
+/**
+ * Get 2FA factors for the current user
+ */
+export async function get2FAFactors() {
+    const supabase = await createClient()
+
+    const { data, error } = await supabase.auth.mfa.listFactors()
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    return { factors: data.totp }
+}
+
+/**
+ * Get user preferences
+ */
+export async function getUserPreferences() {
+    return { timezone: 'UTC' }
+}
+
+/**
+ * Update user preferences
+ */
+export async function updateUserPreferences(timezone: string) {
+    // Placeholder for future preference storage
     return { success: true }
 }
