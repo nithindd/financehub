@@ -16,6 +16,16 @@ import { UsernameInput } from '@/components/username-input'
 import { TimezoneForm } from '@/components/profile/timezone-form'
 import QRCode from 'qrcode'
 import { Header } from '@/components/layout/header'
+import { deleteUserAccount } from '@/actions/user'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
 
 export default function ProfilePage() {
     const [profile, setProfile] = React.useState<any>(null)
@@ -44,6 +54,10 @@ export default function ProfilePage() {
     const [twoFAFactorId, setTwoFAFactorId] = React.useState('')
     const [verificationCode, setVerificationCode] = React.useState('')
     const [currentFactorId, setCurrentFactorId] = React.useState('')
+
+    // Delete Account State
+    const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
+    const [isDeleting, setIsDeleting] = React.useState(false)
 
     React.useEffect(() => {
         loadProfile()
@@ -175,6 +189,19 @@ export default function ProfilePage() {
         }
     }
 
+    async function handleDeleteAccount() {
+        setIsDeleting(true)
+        const result = await deleteUserAccount()
+
+        if (result.error) {
+            setUpdateStatus({ type: 'error', message: result.error })
+            setIsDeleting(false)
+            setShowDeleteDialog(false)
+        } else {
+            window.location.href = '/'
+        }
+    }
+
     if (loading) {
         return (
             <div className="flex min-h-screen items-center justify-center">
@@ -221,6 +248,10 @@ export default function ProfilePage() {
                         <TabsTrigger value="settings" className="flex items-center gap-2">
                             <Settings className="h-4 w-4" />
                             Settings
+                        </TabsTrigger>
+                        <TabsTrigger value="danger" className="flex items-center gap-2 text-destructive data-[state=active]:text-destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            Danger Zone
                         </TabsTrigger>
                     </TabsList>
 
@@ -465,8 +496,43 @@ export default function ProfilePage() {
                             </CardContent>
                         </Card>
                     </TabsContent>
+                    <TabsContent value="danger">
+                        <Card className="border-destructive/50 bg-destructive/5">
+                            <CardHeader>
+                                <CardTitle className="text-destructive">Delete Account</CardTitle>
+                                <CardDescription className="text-destructive/80">
+                                    Permanently delete your account and all associated data. This action cannot be undone.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                                    <DialogTrigger asChild>
+                                        <Button variant="destructive">Delete Account</Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Are you absolutely sure?</DialogTitle>
+                                            <DialogDescription>
+                                                This action cannot be undone. This will permanently delete your account,
+                                                transactions, and remove your data from our servers.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <DialogFooter>
+                                            <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={isDeleting}>
+                                                Cancel
+                                            </Button>
+                                            <Button variant="destructive" onClick={handleDeleteAccount} disabled={isDeleting}>
+                                                {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                                Yes, Delete My Account
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
                 </Tabs>
             </main>
-        </div>
+        </div >
     )
 }

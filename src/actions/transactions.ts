@@ -15,6 +15,8 @@ export interface TransactionInput {
     entries: JournalEntryInput[]
     evidencePath?: string
     parentId?: string
+    vendor?: string
+    items?: any[]
 }
 
 export async function createTransaction(input: TransactionInput) {
@@ -43,7 +45,9 @@ export async function createTransaction(input: TransactionInput) {
             description: input.description,
             user_id: user.id,
             evidence_path: input.evidencePath,
-            parent_id: input.parentId
+            parent_id: input.parentId,
+            vendor: input.vendor,
+            items: input.items || []
         })
         .select()
         .single()
@@ -122,7 +126,9 @@ export async function updateTransaction(id: string, input: TransactionInput) {
             date: input.date.toISOString(),
             description: input.description,
             evidence_path: input.evidencePath,
-            parent_id: input.parentId
+            parent_id: input.parentId,
+            vendor: input.vendor,
+            items: input.items || []
         })
         .eq('id', id)
         .eq('user_id', user.id)

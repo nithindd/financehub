@@ -270,7 +270,9 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
                     { accountId: bankAccountId, type: 'CREDIT' as const, amount: li.amount }
                 ],
                 // Only first transaction gets the evidence path
-                evidencePath: index === 0 ? (evidencePath || undefined) : undefined
+                evidencePath: index === 0 ? (evidencePath || undefined) : undefined,
+                vendor: description,
+                items: lineItems
             }))
 
             const result = await createTransactionBatch(batch)
@@ -290,7 +292,9 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
                     type: r.type,
                     amount: parseFloat(r.amount)
                 })),
-                evidencePath: evidencePath || undefined
+                evidencePath: evidencePath || undefined,
+                vendor: description,
+                items: lineItems
             })
             if (!result.success) {
                 alert(result.error)
