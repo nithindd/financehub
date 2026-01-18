@@ -14,7 +14,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Plus, Trash2, Loader2, Upload, Check, AlertCircle } from "lucide-react"
+import { Plus, Trash2, Loader2, Upload, Check, AlertCircle, Camera } from "lucide-react"
 import { DatePicker } from "@/components/ui/date-picker"
 import {
     Select,
@@ -79,6 +79,7 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
     const [bankAccountId, setBankAccountId] = useState('')
     const [paymentMethodId, setPaymentMethodId] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const cameraInputRef = useRef<HTMLInputElement>(null)
 
     // Currency State
     const [currency, setCurrency] = useState('USD')
@@ -409,26 +410,46 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
                             <Upload className="h-8 w-8 text-blue-500" />
                         </div>
                         <p className="text-center text-sm text-muted-foreground max-w-xs">
-                            Select an invoice file (Image or PDF) to extract details automatically.
+                            Take a photo or upload an invoice (Image or PDF) to extract details automatically.
                         </p>
+
+                        <input
+                            type="file"
+                            ref={cameraInputRef}
+                            className="hidden"
+                            accept="image/*"
+                            capture="environment"
+                            onChange={handleFileUpload}
+                        />
 
                         <input
                             type="file"
                             ref={fileInputRef}
                             className="hidden"
                             accept="image/*,application/pdf"
-                            capture="environment"
                             onChange={handleFileUpload}
                         />
 
-                        <div className="flex flex-col gap-2 w-full max-w-xs mt-4">
+                        <div className="flex flex-col gap-3 w-full max-w-xs mt-4">
                             <Button
+                                onClick={() => cameraInputRef.current?.click()}
+                                disabled={ocrLoading}
+                                className="w-full"
+                            >
+                                {ocrLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
+                                Take Photo
+                            </Button>
+
+                            <Button
+                                variant="outline"
                                 onClick={() => fileInputRef.current?.click()}
                                 disabled={ocrLoading}
                                 className="w-full"
                             >
-                                {ocrLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Select File"}
+                                {ocrLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                                Upload File
                             </Button>
+
                             <Button variant="ghost" onClick={() => setOpen(false)} className="w-full">
                                 Cancel
                             </Button>
