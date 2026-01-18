@@ -4,6 +4,7 @@ import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { sendEmail } from '@/lib/email'
 
 export async function deleteUserAccount() {
     const supabase = await createClient()
@@ -22,6 +23,25 @@ export async function deleteUserAccount() {
     if (error) {
         console.error('Error deleting user:', error)
         return { error: error.message }
+    }
+
+    // Notify Admin about deletion
+    try {
+        const adminEmail = process.env.ADMIN_EMAIL
+        if (adminEmail) {
+            await sendEmail({
+                to: adminEmail,
+                subject: 'User Account Deleted - FinanceHub',
+                html: `
+                    <h1>User Deleted Account</h1>
+                    <p><strong>User ID:</strong> ${user.id}</p>
+                    <p><strong>Email:</strong> ${user.email}</p>
+                    <p>The user has requested to delete their account.</p>
+                `
+            })
+        }
+    } catch (err) {
+        console.error('Error sending admin deletion notification:', err)
     }
 
     // Sign out the session
