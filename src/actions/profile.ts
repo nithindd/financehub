@@ -119,7 +119,8 @@ export async function getUserProfile() {
     return {
         profile: {
             ...profile,
-            email: user.email
+            email: user.email,
+            provider: user.app_metadata?.provider || 'email'
         }
     }
 }

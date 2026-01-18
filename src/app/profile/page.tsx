@@ -20,6 +20,7 @@ export default function ProfilePage() {
     const [profile, setProfile] = React.useState<any>(null)
     const [loading, setLoading] = React.useState(true)
     const [updateStatus, setUpdateStatus] = React.useState<{ type: 'success' | 'error'; message: string } | null>(null)
+    const [isOAuthUser, setIsOAuthUser] = React.useState(false)
 
     // Personal Info Form
     const [personalInfo, setPersonalInfo] = React.useState({
@@ -59,6 +60,11 @@ export default function ProfilePage() {
 
         if (result.profile) {
             setProfile(result.profile)
+
+            // Detect if user is OAuth (Google) user
+            const isOAuth = result.profile.provider === 'google'
+            setIsOAuthUser(isOAuth)
+
             setPersonalInfo({
                 firstName: result.profile.first_name || '',
                 lastName: result.profile.last_name || '',
@@ -192,15 +198,17 @@ export default function ProfilePage() {
             )}
 
             <Tabs defaultValue="account" className="space-y-6">
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className={`grid w-full ${isOAuthUser ? 'grid-cols-3' : 'grid-cols-4'}`}>
                     <TabsTrigger value="account" className="flex items-center gap-2">
                         <User className="h-4 w-4" />
                         Account
                     </TabsTrigger>
-                    <TabsTrigger value="security" className="flex items-center gap-2">
-                        <Lock className="h-4 w-4" />
-                        Security
-                    </TabsTrigger>
+                    {!isOAuthUser && (
+                        <TabsTrigger value="security" className="flex items-center gap-2">
+                            <Lock className="h-4 w-4" />
+                            Security
+                        </TabsTrigger>
+                    )}
                     <TabsTrigger value="2fa" className="flex items-center gap-2">
                         <Shield className="h-4 w-4" />
                         2FA
@@ -215,50 +223,82 @@ export default function ProfilePage() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Personal Information</CardTitle>
-                            <CardDescription>Update your personal details</CardDescription>
+                            <CardDescription>
+                                {isOAuthUser ? 'Your account information from Google' : 'Update your personal details'}
+                            </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <UsernameInput
-                                value={personalInfo.username}
-                                onChange={(value) => setPersonalInfo({ ...personalInfo, username: value })}
-                            />
-
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label htmlFor="firstName">First Name</Label>
-                                    <Input
-                                        id="firstName"
-                                        value={personalInfo.firstName}
-                                        onChange={(e) => setPersonalInfo({ ...personalInfo, firstName: e.target.value })}
-                                        placeholder="John"
+                            {!isOAuthUser ? (
+                                <>
+                                    <UsernameInput
+                                        value={personalInfo.username}
+                                        onChange={(value) => setPersonalInfo({ ...personalInfo, username: value })}
                                     />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="lastName">Last Name</Label>
-                                    <Input
-                                        id="lastName"
-                                        value={personalInfo.lastName}
-                                        onChange={(e) => setPersonalInfo({ ...personalInfo, lastName: e.target.value })}
-                                        placeholder="Doe"
-                                    />
-                                </div>
-                            </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    value={personalInfo.email}
-                                    disabled
-                                    className="bg-muted"
-                                />
-                                <p className="text-xs text-muted-foreground">Email cannot be changed at this time</p>
-                            </div>
+                                    <div className="grid gap-4 sm:grid-cols-2">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="firstName">First Name</Label>
+                                            <Input
+                                                id="firstName"
+                                                value={personalInfo.firstName}
+                                                onChange={(e) => setPersonalInfo({ ...personalInfo, firstName: e.target.value })}
+                                                placeholder="John"
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="lastName">Last Name</Label>
+                                            <Input
+                                                id="lastName"
+                                                value={personalInfo.lastName}
+                                                onChange={(e) => setPersonalInfo({ ...personalInfo, lastName: e.target.value })}
+                                                placeholder="Doe"
+                                            />
+                                        </div>
+                                    </div>
 
-                            <Button onClick={handleUpdateProfile} className="w-full sm:w-auto">
-                                Save Changes
-                            </Button>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email">Email</Label>
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            value={personalInfo.email}
+                                            disabled
+                                            className="bg-muted"
+                                        />
+                                        <p className="text-xs text-muted-foreground">Email cannot be changed at this time</p>
+                                    </div>
+
+                                    <Button onClick={handleUpdateProfile} className="w-full sm:w-auto">
+                                        Save Changes
+                                    </Button>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="space-y-2">
+                                        <Label className="text-sm text-muted-foreground">Full Name</Label>
+                                        <p className="text-lg font-medium">
+                                            {personalInfo.firstName || personalInfo.lastName
+                                                ? `${personalInfo.firstName} ${personalInfo.lastName}`.trim()
+                                                : 'Not provided'}
+                                        </p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-sm text-muted-foreground">Email</Label>
+                                        <p className="text-lg font-medium">{personalInfo.email}</p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="text-sm text-muted-foreground">Username</Label>
+                                        <p className="text-lg font-medium">{personalInfo.username}</p>
+                                    </div>
+                                    <Alert>
+                                        <AlertCircle className="h-4 w-4" />
+                                        <AlertTitle>Google Account</AlertTitle>
+                                        <AlertDescription>
+                                            Your account is managed by Google. To update your name or email, please visit your Google Account settings.
+                                        </AlertDescription>
+                                    </Alert>
+                                </>
+                            )}
                         </CardContent>
                     </Card>
                 </TabsContent>
