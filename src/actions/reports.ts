@@ -171,6 +171,7 @@ export async function sendReportEmail(formData: FormData) {
         let receiptPaths: string[] = []
         if (includeReceipts && receiptPathsJson) {
             receiptPaths = JSON.parse(receiptPathsJson)
+            console.log(`[EMAIL DEBUG] Found ${receiptPaths.length} receipt paths to process`)
         }
 
         const cappedReceiptPaths = receiptPaths.slice(0, 10)
@@ -178,25 +179,33 @@ export async function sendReportEmail(formData: FormData) {
 
         // Download and attach receipts
         if (cappedReceiptPaths.length > 0) {
+            console.log(`[EMAIL DEBUG] Downloading ${cappedReceiptPaths.length} receipts...`)
             const receiptAttachments = await Promise.all(
                 cappedReceiptPaths.map(async (path) => {
+                    console.log(`[EMAIL DEBUG] Attempting to download: ${path}`)
                     const { data, error } = await supabase.storage.from('evidence').download(path)
                     if (error || !data) {
-                        console.error('Error downloading receipt:', path, error)
+                        console.error('[EMAIL DEBUG] Error downloading receipt:', path, error)
                         return null
                     }
+                    console.log(`[EMAIL DEBUG] Successfully downloaded receipt: ${path} (${data.size} bytes, type: ${data.type})`)
                     return {
                         filename: path.split('/').pop(),
-                        content: Buffer.from(await data.arrayBuffer())
+                        content: Buffer.from(await data.arrayBuffer()),
+                        contentType: data.type
                     }
                 })
             )
 
             // Filter out nulls and add to main attachments
             receiptAttachments.forEach(att => {
-                if (att) attachments.push(att)
+                if (att) {
+                    attachments.push(att)
+                }
             })
         }
+
+        console.log(`[EMAIL DEBUG] Total attachments after receipts: ${attachments.length}`)
 
         const fromAddress = process.env.EMAIL_FROM || 'FinanceHub <onboarding@resend.dev>'
 

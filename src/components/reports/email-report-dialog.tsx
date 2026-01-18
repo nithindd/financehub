@@ -17,6 +17,8 @@ import { sendReportEmail } from "@/actions/reports"
 import { jsPDF } from "jspdf"
 import Papa from "papaparse"
 import { ReportTransaction } from "@/actions/reports"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircle, CheckCircle, Loader2 } from "lucide-react"
 
 interface EmailReportDialogProps {
     open: boolean
@@ -42,6 +44,7 @@ export function EmailReportDialog({
     const [attachPdf, setAttachPdf] = React.useState(true)
     const [attachReceipts, setAttachReceipts] = React.useState(false)
     const [isSending, setIsSending] = React.useState(false)
+    const [status, setStatus] = React.useState<{ type: 'success' | 'error', message: string } | null>(null)
 
     React.useEffect(() => {
         if (defaultEmail) {
@@ -134,14 +137,14 @@ export function EmailReportDialog({
 
             const result = await sendReportEmail(formData)
             if (result.success) {
-                alert(`Email sent to ${email}!`)
-                onOpenChange(false)
+                setStatus({ type: 'success', message: `Email sent to ${email}!` })
+                setTimeout(() => onOpenChange(false), 2000)
             } else {
-                alert(`Failed to send email: ${result.error || 'Unknown error'}`)
+                setStatus({ type: 'error', message: result.error || 'Failed to send email' })
             }
         } catch (error) {
             console.error(error)
-            alert('Error sending email')
+            setStatus({ type: 'error', message: 'An unexpected error occurred' })
         } finally {
             setIsSending(false)
         }
@@ -186,6 +189,14 @@ export function EmailReportDialog({
                             </div>
                         </div>
                     </div>
+
+                    {status && (
+                        <Alert variant={status.type === 'error' ? 'destructive' : 'default'} className={status.type === 'success' ? 'border-green-500 bg-green-50 text-green-700' : ''}>
+                            {status.type === 'error' ? <AlertCircle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4 text-green-500" />}
+                            <AlertTitle>{status.type === 'error' ? 'Error' : 'Success'}</AlertTitle>
+                            <AlertDescription>{status.message}</AlertDescription>
+                        </Alert>
+                    )}
 
                     <DialogFooter>
                         <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
