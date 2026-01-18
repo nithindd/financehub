@@ -29,7 +29,7 @@ export default async function Page() {
         <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <TransactionDialog defaultOpenOcr={true}>
-              <Button className="h-24 flex-col gap-2 bg-primary/10 text-primary hover:bg-primary/20" variant="outline">
+              <Button className="h-24 flex-col gap-2 bg-primary/10 text-primary hover:bg-primary/20 md:hidden" variant="outline">
                 <Camera className="h-6 w-6" />
                 <span>Scan Invoice</span>
               </Button>
