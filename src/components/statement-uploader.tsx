@@ -87,21 +87,20 @@ export function StatementUploader({ children }: { children: React.ReactNode }) {
         // 2. Parse file
         if (file.type === 'application/pdf') {
             try {
-                const arrayBuffer = await file.arrayBuffer()
-                const buffer = Buffer.from(arrayBuffer)
+                const formData = new FormData()
+                formData.append('file', file)
 
-                const { extractTextFromPDF, parseStatementText } = await import('@/lib/pdf-parser')
-                const text = await extractTextFromPDF(buffer)
-                const parsedData = parseStatementText(text)
+                const { parsePdfStatement } = await import('@/actions/parse-pdf')
+                const result = await parsePdfStatement(formData)
 
-                if (parsedData.length === 0) {
-                    alert('No tabular data found in PDF. Please try a CSV export instead.')
+                if (!result.success || !result.data) {
+                    alert(result.error || 'Unknown error parsing PDF')
                     setLoading(false)
                     return
                 }
 
-                setRawData(parsedData)
-                setHeaders(Object.keys(parsedData[0]))
+                setRawData(result.data)
+                setHeaders(Object.keys(result.data[0]))
                 setLoading(false)
             } catch (err: any) {
                 alert('Failed to parse PDF: ' + err.message)
