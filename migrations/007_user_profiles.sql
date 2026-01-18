@@ -26,17 +26,36 @@ CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 DECLARE
   generated_username TEXT;
+  meta_username TEXT;
 BEGIN
-  -- Generate username from email (part before @)
-  generated_username := SPLIT_PART(NEW.email, '@', 1);
+  -- Check if username is provided in metadata
+  meta_username := NEW.raw_user_meta_data->>'username';
+  
+  IF meta_username IS NOT NULL THEN
+    generated_username := meta_username;
+  ELSE
+    -- Generate username from email (part before @)
+    generated_username := SPLIT_PART(NEW.email, '@', 1);
+  END IF;
   
   -- If username already exists, append random number
   WHILE EXISTS (SELECT 1 FROM profiles WHERE LOWER(username) = LOWER(generated_username)) LOOP
     generated_username := SPLIT_PART(NEW.email, '@', 1) || floor(random() * 10000)::text;
   END LOOP;
   
-  INSERT INTO public.profiles (id, username, updated_at)
-  VALUES (NEW.id, generated_username, NOW());
+  INSERT INTO public.profiles (id, username, first_name, last_name, updated_at)
+  VALUES (
+    NEW.id, 
+    generated_username, 
+    NEW.raw_user_meta_data->>'first_name',
+    NEW.raw_user_meta_data->>'last_name',
+    NOW()
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    username = EXCLUDED.username,
+    first_name = EXCLUDED.first_name,
+    last_name = EXCLUDED.last_name,
+    updated_at = NOW();
   
   RETURN NEW;
 END;

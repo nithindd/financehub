@@ -44,7 +44,7 @@ export default async function ReportsPage({
     return (
         <div className="flex min-h-screen flex-col bg-muted/20">
             <Header title="Financial Reports" showBack={true} />
-            <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
+            <main className="container mx-auto flex-1 items-start gap-4 p-4 sm:px-6 sm:py-8 md:gap-8 max-w-7xl">
 
                 <ReportFilters />
 

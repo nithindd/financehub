@@ -59,19 +59,20 @@ export async function signUpWithEmail(
         return { error: error.message }
     }
 
-    // Update profile with additional info
+    // Update/Create profile with additional info
     if (data.user) {
         const { error: profileError } = await supabase
             .from('profiles')
-            .update({
+            .upsert({
+                id: data.user.id,
                 username,
                 first_name: firstName,
                 last_name: lastName,
+                updated_at: new Date().toISOString()
             })
-            .eq('id', data.user.id)
 
         if (profileError) {
-            console.error('Profile update error:', profileError)
+            console.error('Profile persistence error:', profileError)
         }
     }
 

@@ -22,6 +22,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { Footer } from "@/components/layout/footer";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,7 +34,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <div className="flex flex-col min-h-screen">
+          <div className="flex-1">
+            {children}
+          </div>
+          <Footer />
+        </div>
       </body>
     </html>
   );

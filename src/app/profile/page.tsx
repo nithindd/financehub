@@ -15,6 +15,7 @@ import { PasswordStrengthIndicator } from '@/components/password-strength-indica
 import { UsernameInput } from '@/components/username-input'
 import { TimezoneForm } from '@/components/profile/timezone-form'
 import QRCode from 'qrcode'
+import { Header } from '@/components/layout/header'
 
 export default function ProfilePage() {
     const [profile, setProfile] = React.useState<any>(null)
@@ -182,285 +183,290 @@ export default function ProfilePage() {
         )
     }
 
+
     return (
-        <div className="container mx-auto py-8 px-4 max-w-4xl">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-foreground">Profile Settings</h1>
-                <p className="text-muted-foreground mt-2">Manage your account settings and preferences</p>
-            </div>
+        <div className="flex min-h-screen flex-col bg-muted/20">
+            <Header title="Profile Settings" showBack={true} backHref="/" />
 
-            {updateStatus && (
-                <Alert variant={updateStatus.type === 'error' ? 'destructive' : 'default'} className={`mb-6 ${updateStatus.type === 'success' ? 'border-green-500 bg-green-50 text-green-700' : ''}`}>
-                    {updateStatus.type === 'error' ? <AlertCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4 text-green-500" />}
-                    <AlertTitle>{updateStatus.type === 'error' ? 'Error' : 'Success'}</AlertTitle>
-                    <AlertDescription>{updateStatus.message}</AlertDescription>
-                </Alert>
-            )}
+            <main className="container mx-auto py-8 px-4 max-w-4xl flex-1 mb-12">
+                <div className="mb-8">
+                    <h1 className="text-2xl font-bold text-foreground">Account Settings</h1>
+                    <p className="text-muted-foreground mt-1">Manage your personal information, security, and preferences</p>
+                </div>
 
-            <Tabs defaultValue="account" className="space-y-6">
-                <TabsList className={`grid w-full ${isOAuthUser ? 'grid-cols-3' : 'grid-cols-4'}`}>
-                    <TabsTrigger value="account" className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        Account
-                    </TabsTrigger>
-                    {!isOAuthUser && (
-                        <TabsTrigger value="security" className="flex items-center gap-2">
-                            <Lock className="h-4 w-4" />
-                            Security
+                {updateStatus && (
+                    <Alert variant={updateStatus.type === 'error' ? 'destructive' : 'default'} className={`mb-6 ${updateStatus.type === 'success' ? 'border-green-500 bg-green-50 text-green-700' : ''}`}>
+                        {updateStatus.type === 'error' ? <AlertCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                        <AlertTitle>{updateStatus.type === 'error' ? 'Error' : 'Success'}</AlertTitle>
+                        <AlertDescription>{updateStatus.message}</AlertDescription>
+                    </Alert>
+                )}
+
+                <Tabs defaultValue="account" className="space-y-6">
+                    <TabsList className={`grid w-full ${isOAuthUser ? 'grid-cols-3' : 'grid-cols-4'}`}>
+                        <TabsTrigger value="account" className="flex items-center gap-2">
+                            <User className="h-4 w-4" />
+                            Account
                         </TabsTrigger>
-                    )}
-                    <TabsTrigger value="2fa" className="flex items-center gap-2">
-                        <Shield className="h-4 w-4" />
-                        2FA
-                    </TabsTrigger>
-                    <TabsTrigger value="settings" className="flex items-center gap-2">
-                        <Settings className="h-4 w-4" />
-                        Settings
-                    </TabsTrigger>
-                </TabsList>
+                        {!isOAuthUser && (
+                            <TabsTrigger value="security" className="flex items-center gap-2">
+                                <Lock className="h-4 w-4" />
+                                Security
+                            </TabsTrigger>
+                        )}
+                        <TabsTrigger value="2fa" className="flex items-center gap-2">
+                            <Shield className="h-4 w-4" />
+                            2FA
+                        </TabsTrigger>
+                        <TabsTrigger value="settings" className="flex items-center gap-2">
+                            <Settings className="h-4 w-4" />
+                            Settings
+                        </TabsTrigger>
+                    </TabsList>
 
-                <TabsContent value="account">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Personal Information</CardTitle>
-                            <CardDescription>
-                                {isOAuthUser ? 'Your account information from Google' : 'Update your personal details'}
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {!isOAuthUser ? (
-                                <>
-                                    <UsernameInput
-                                        value={personalInfo.username}
-                                        onChange={(value) => setPersonalInfo({ ...personalInfo, username: value })}
+                    <TabsContent value="account">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Personal Information</CardTitle>
+                                <CardDescription>
+                                    {isOAuthUser ? 'Your account information from Google' : 'Update your personal details'}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {!isOAuthUser ? (
+                                    <>
+                                        <UsernameInput
+                                            value={personalInfo.username}
+                                            onChange={(value) => setPersonalInfo({ ...personalInfo, username: value })}
+                                        />
+
+                                        <div className="grid gap-4 sm:grid-cols-2">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="firstName">First Name</Label>
+                                                <Input
+                                                    id="firstName"
+                                                    value={personalInfo.firstName}
+                                                    onChange={(e) => setPersonalInfo({ ...personalInfo, firstName: e.target.value })}
+                                                    placeholder="John"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="lastName">Last Name</Label>
+                                                <Input
+                                                    id="lastName"
+                                                    value={personalInfo.lastName}
+                                                    onChange={(e) => setPersonalInfo({ ...personalInfo, lastName: e.target.value })}
+                                                    placeholder="Doe"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="email">Email</Label>
+                                            <Input
+                                                id="email"
+                                                type="email"
+                                                value={personalInfo.email}
+                                                disabled
+                                                className="bg-muted"
+                                            />
+                                            <p className="text-xs text-muted-foreground">Email cannot be changed at this time</p>
+                                        </div>
+
+                                        <Button onClick={handleUpdateProfile} className="w-full sm:w-auto">
+                                            Save Changes
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="space-y-2">
+                                            <Label className="text-sm text-muted-foreground">Full Name</Label>
+                                            <p className="text-lg font-medium">
+                                                {personalInfo.firstName || personalInfo.lastName
+                                                    ? `${personalInfo.firstName} ${personalInfo.lastName}`.trim()
+                                                    : 'Not provided'}
+                                            </p>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-sm text-muted-foreground">Email</Label>
+                                            <p className="text-lg font-medium">{personalInfo.email}</p>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-sm text-muted-foreground">Username</Label>
+                                            <p className="text-lg font-medium">{personalInfo.username}</p>
+                                        </div>
+                                        <Alert>
+                                            <AlertCircle className="h-4 w-4" />
+                                            <AlertTitle>Google Account</AlertTitle>
+                                            <AlertDescription>
+                                                Your account is managed by Google. To update your name or email, please visit your Google Account settings.
+                                            </AlertDescription>
+                                        </Alert>
+                                    </>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="security">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Change Password</CardTitle>
+                                <CardDescription>Update your password to keep your account secure</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="newPassword">New Password</Label>
+                                    <Input
+                                        id="newPassword"
+                                        type="password"
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
                                     />
+                                    <PasswordStrengthIndicator password={newPassword} />
+                                </div>
 
-                                    <div className="grid gap-4 sm:grid-cols-2">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="firstName">First Name</Label>
-                                            <Input
-                                                id="firstName"
-                                                value={personalInfo.firstName}
-                                                onChange={(e) => setPersonalInfo({ ...personalInfo, firstName: e.target.value })}
-                                                placeholder="John"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="lastName">Last Name</Label>
-                                            <Input
-                                                id="lastName"
-                                                value={personalInfo.lastName}
-                                                onChange={(e) => setPersonalInfo({ ...personalInfo, lastName: e.target.value })}
-                                                placeholder="Doe"
-                                            />
-                                        </div>
-                                    </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                                    <Input
+                                        id="confirmPassword"
+                                        type="password"
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                    />
+                                </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="email">Email</Label>
-                                        <Input
-                                            id="email"
-                                            type="email"
-                                            value={personalInfo.email}
-                                            disabled
-                                            className="bg-muted"
-                                        />
-                                        <p className="text-xs text-muted-foreground">Email cannot be changed at this time</p>
-                                    </div>
+                                <Button onClick={handleChangePassword} className="w-full sm:w-auto">
+                                    Update Password
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
 
-                                    <Button onClick={handleUpdateProfile} className="w-full sm:w-auto">
-                                        Save Changes
-                                    </Button>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="space-y-2">
-                                        <Label className="text-sm text-muted-foreground">Full Name</Label>
-                                        <p className="text-lg font-medium">
-                                            {personalInfo.firstName || personalInfo.lastName
-                                                ? `${personalInfo.firstName} ${personalInfo.lastName}`.trim()
-                                                : 'Not provided'}
+                    <TabsContent value="2fa">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Two-Factor Authentication</CardTitle>
+                                <CardDescription>
+                                    Add an extra layer of security to your account
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {!twoFAEnabled && !showSetup2FA && (
+                                    <div className="space-y-4">
+                                        <p className="text-sm text-muted-foreground">
+                                            Two-factor authentication (2FA) adds an extra layer of security by requiring a code from your authenticator app when signing in.
                                         </p>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-sm text-muted-foreground">Email</Label>
-                                        <p className="text-lg font-medium">{personalInfo.email}</p>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="text-sm text-muted-foreground">Username</Label>
-                                        <p className="text-lg font-medium">{personalInfo.username}</p>
-                                    </div>
-                                    <Alert>
-                                        <AlertCircle className="h-4 w-4" />
-                                        <AlertTitle>Google Account</AlertTitle>
-                                        <AlertDescription>
-                                            Your account is managed by Google. To update your name or email, please visit your Google Account settings.
-                                        </AlertDescription>
-                                    </Alert>
-                                </>
-                            )}
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="security">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Change Password</CardTitle>
-                            <CardDescription>Update your password to keep your account secure</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="newPassword">New Password</Label>
-                                <Input
-                                    id="newPassword"
-                                    type="password"
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                />
-                                <PasswordStrengthIndicator password={newPassword} />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                                <Input
-                                    id="confirmPassword"
-                                    type="password"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                />
-                            </div>
-
-                            <Button onClick={handleChangePassword} className="w-full sm:w-auto">
-                                Update Password
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="2fa">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Two-Factor Authentication</CardTitle>
-                            <CardDescription>
-                                Add an extra layer of security to your account
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            {!twoFAEnabled && !showSetup2FA && (
-                                <div className="space-y-4">
-                                    <p className="text-sm text-muted-foreground">
-                                        Two-factor authentication (2FA) adds an extra layer of security by requiring a code from your authenticator app when signing in.
-                                    </p>
-                                    <Button onClick={handleEnable2FA}>
-                                        <Shield className="mr-2 h-4 w-4" />
-                                        Enable 2FA
-                                    </Button>
-                                </div>
-                            )}
-
-                            {showSetup2FA && (
-                                <div className="space-y-4">
-                                    <Alert>
-                                        <Shield className="h-4 w-4" />
-                                        <AlertTitle>Set up your authenticator app</AlertTitle>
-                                        <AlertDescription>
-                                            Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
-                                        </AlertDescription>
-                                    </Alert>
-
-                                    <div className="flex justify-center">
-                                        {qrCodeUrl && <img src={qrCodeUrl} alt="2FA QR Code" className="border rounded-lg p-4" />}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label>Or enter this secret manually:</Label>
-                                        <Input value={twoFASecret} readOnly className="bg-muted font-mono text-sm" />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="verificationCode">Enter 6-digit code from your app</Label>
-                                        <Input
-                                            id="verificationCode"
-                                            type="text"
-                                            maxLength={6}
-                                            value={verificationCode}
-                                            onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
-                                            placeholder="000000"
-                                            className="font-mono text-lg tracking-widest text-center"
-                                        />
-                                    </div>
-
-                                    <div className="flex gap-2">
-                                        <Button onClick={handleVerify2FA} disabled={verificationCode.length !== 6}>
-                                            Verify & Enable
-                                        </Button>
-                                        <Button variant="outline" onClick={() => setShowSetup2FA(false)}>
-                                            Cancel
+                                        <Button onClick={handleEnable2FA}>
+                                            <Shield className="mr-2 h-4 w-4" />
+                                            Enable 2FA
                                         </Button>
                                     </div>
-                                </div>
-                            )}
+                                )}
 
-                            {twoFAEnabled && !showSetup2FA && (
-                                <div className="space-y-4">
-                                    <Alert className="border-green-500 bg-green-50">
-                                        <CheckCircle2 className="h-4 w-4 text-green-600" />
-                                        <AlertTitle className="text-green-600">2FA is enabled</AlertTitle>
-                                        <AlertDescription className="text-green-600">
-                                            Your account is protected with two-factor authentication
-                                        </AlertDescription>
-                                    </Alert>
+                                {showSetup2FA && (
+                                    <div className="space-y-4">
+                                        <Alert>
+                                            <Shield className="h-4 w-4" />
+                                            <AlertTitle>Set up your authenticator app</AlertTitle>
+                                            <AlertDescription>
+                                                Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
+                                            </AlertDescription>
+                                        </Alert>
 
-                                    <Button variant="destructive" onClick={handleDisable2FA}>
-                                        Disable 2FA
-                                    </Button>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+                                        <div className="flex justify-center">
+                                            {qrCodeUrl && <img src={qrCodeUrl} alt="2FA QR Code" className="border rounded-lg p-4" />}
+                                        </div>
 
-                <TabsContent value="settings">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Preferences</CardTitle>
-                            <CardDescription>Customize your FinanceHub experience</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <TimezoneForm initialTimezone="UTC" />
-                        </CardContent>
-                    </Card>
+                                        <div className="space-y-2">
+                                            <Label>Or enter this secret manually:</Label>
+                                            <Input value={twoFASecret} readOnly className="bg-muted font-mono text-sm" />
+                                        </div>
 
-                    <Card className="mt-6">
-                        <CardHeader>
-                            <CardTitle>Management</CardTitle>
-                            <CardDescription>Manage categories and vendor mappings</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                            <Link href="/settings/categories">
-                                <Button variant="outline" className="w-full justify-start">
-                                    Manage Categories
-                                </Button>
-                            </Link>
-                            <Link href="/settings/vendors">
-                                <Button variant="outline" className="w-full justify-start">
-                                    Vendor Mappings
-                                </Button>
-                            </Link>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="verificationCode">Enter 6-digit code from your app</Label>
+                                            <Input
+                                                id="verificationCode"
+                                                type="text"
+                                                maxLength={6}
+                                                value={verificationCode}
+                                                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                                                placeholder="000000"
+                                                className="font-mono text-lg tracking-widest text-center"
+                                            />
+                                        </div>
 
-                            <div className="pt-4 border-t mt-4">
-                                <Link href="/manual">
-                                    <Button variant="secondary" className="w-full justify-start gap-2">
-                                        <HelpCircle className="h-4 w-4" />
-                                        User Manual & Help
+                                        <div className="flex gap-2">
+                                            <Button onClick={handleVerify2FA} disabled={verificationCode.length !== 6}>
+                                                Verify & Enable
+                                            </Button>
+                                            <Button variant="outline" onClick={() => setShowSetup2FA(false)}>
+                                                Cancel
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {twoFAEnabled && !showSetup2FA && (
+                                    <div className="space-y-4">
+                                        <Alert className="border-green-500 bg-green-50">
+                                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                            <AlertTitle className="text-green-600">2FA is enabled</AlertTitle>
+                                            <AlertDescription className="text-green-600">
+                                                Your account is protected with two-factor authentication
+                                            </AlertDescription>
+                                        </Alert>
+
+                                        <Button variant="destructive" onClick={handleDisable2FA}>
+                                            Disable 2FA
+                                        </Button>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="settings">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Preferences</CardTitle>
+                                <CardDescription>Customize your FinanceHub experience</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <TimezoneForm initialTimezone="UTC" />
+                            </CardContent>
+                        </Card>
+
+                        <Card className="mt-6">
+                            <CardHeader>
+                                <CardTitle>Management</CardTitle>
+                                <CardDescription>Manage categories and vendor mappings</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-2">
+                                <Link href="/settings/categories">
+                                    <Button variant="outline" className="w-full justify-start">
+                                        Manage Categories
                                     </Button>
                                 </Link>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-            </Tabs>
+                                <Link href="/settings/vendors">
+                                    <Button variant="outline" className="w-full justify-start">
+                                        Vendor Mappings
+                                    </Button>
+                                </Link>
+
+                                <div className="pt-4 border-t mt-4">
+                                    <Link href="/manual">
+                                        <Button variant="secondary" className="w-full justify-start gap-2">
+                                            <HelpCircle className="h-4 w-4" />
+                                            User Manual & Help
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                </Tabs>
+            </main>
         </div>
     )
 }
