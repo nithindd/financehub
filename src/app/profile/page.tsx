@@ -484,14 +484,6 @@ export default function ProfilePage() {
                                     </Button>
                                 </Link>
 
-                                <div className="pt-4 border-t mt-4">
-                                    <Link href="/manual">
-                                        <Button variant="secondary" className="w-full justify-start gap-2">
-                                            <HelpCircle className="h-4 w-4" />
-                                            User Manual & Help
-                                        </Button>
-                                    </Link>
-                                </div>
                             </CardContent>
                         </Card>
                     </TabsContent>

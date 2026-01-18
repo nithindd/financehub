@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, BarChart3, Plus, FileText, Settings, Camera, Receipt } from "lucide-react"
+import { LayoutDashboard, BarChart3, Plus, FileText, Settings, Camera, Receipt, HelpCircle, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     Drawer,

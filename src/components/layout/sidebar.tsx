@@ -4,7 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, CreditCard, BarChart3, Settings, LogOut, ShieldCheck, FileText, Plus, Camera, Receipt, Upload } from "lucide-react"
+import { LayoutDashboard, CreditCard, BarChart3, Settings, LogOut, ShieldCheck, FileText, Plus, Camera, Receipt, Upload, HelpCircle } from "lucide-react"
 import { createClient } from "@/utils/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useEffect, useState } from "react"
@@ -46,6 +46,7 @@ export function Sidebar() {
         { name: "Analytics", href: "/analytics", icon: BarChart3 },
         { name: "Reports", href: "/reports", icon: FileText },
         { name: "Settings", href: "/profile", icon: Settings },
+        { name: "Help & Manual", href: "/manual", icon: HelpCircle },
     ]
 
     return (
@@ -132,6 +133,17 @@ export function Sidebar() {
                         >
                             <Settings className="h-4 w-4" />
                             Settings
+                        </Link>
+
+                        <Link
+                            href="/manual"
+                            className={cn(
+                                "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
+                                pathname === '/manual' ? "bg-muted text-primary" : "text-muted-foreground"
+                            )}
+                        >
+                            <HelpCircle className="h-4 w-4" />
+                            Help & Manual
                         </Link>
                     </nav>
                 </div>
