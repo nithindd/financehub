@@ -164,6 +164,13 @@ export default async function Page() {
         </div>
       </header>
 
+      {/* Educational Warning */}
+      <div className="bg-amber-100 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800 px-4 py-3 text-center text-sm text-amber-900 dark:text-amber-200">
+        <p>
+          <strong>Note:</strong> This website was created purely for my educational purpose. Please refrain from using it for any professional use other than for feature exploration.
+        </p>
+      </div>
+
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white pt-16 pb-32">
@@ -290,7 +297,7 @@ export default async function Page() {
           <div className="container mx-auto px-4 text-center sm:px-8">
             <h2 className="text-3xl font-bold tracking-tight mb-6">Ready to take control of your finances?</h2>
             <p className="mx-auto max-w-2xl text-lg text-primary-foreground/80 mb-10">
-              Join thousands of users who have switched to FinanceHub for smarter, faster accounting.
+              Switch to FinanceHub today for smarter, faster accounting.
             </p>
             <Link href="/signup">
               <Button size="lg" variant="secondary" className="h-14 px-10 text-lg font-semibold">
