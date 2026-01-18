@@ -22,6 +22,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { FileText, Upload, Loader2, Check, AlertCircle } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Papa from 'papaparse'
 import { createTransaction, createTransactionBatch } from '@/actions/transactions'
 import { getAccounts, type Account } from '@/actions/accounts'
@@ -210,6 +211,14 @@ export function StatementUploader({ children }: { children: React.ReactNode }) {
                             <Input type="file" accept=".csv,.pdf" className="mt-4 w-64" onChange={handleFileUpload} disabled={loading} />
                         </div>
                     )}
+
+                    <Alert variant="destructive" className="py-2">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertTitle className="text-sm font-semibold">Security Warning</AlertTitle>
+                        <AlertDescription className="text-xs">
+                            Please redact account numbers and other sensitive PII from your bank statements before uploading.
+                        </AlertDescription>
+                    </Alert>
 
                     {/* Step 2: Map & Preview */}
                     {rawData.length > 0 && (

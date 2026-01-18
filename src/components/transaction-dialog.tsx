@@ -11,9 +11,10 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Plus, Trash2, Loader2, Upload, Check } from "lucide-react"
+import { Plus, Trash2, Loader2, Upload, Check, AlertCircle } from "lucide-react"
 import { DatePicker } from "@/components/ui/date-picker"
 import {
     Select,
@@ -342,6 +343,15 @@ export function TransactionDialog({ children, defaultOpenOcr = false }: { childr
                         {ocrLoading ? "Scanning Invoice..." : "Auto-fill from Invoice Image"}
                     </Button>
                 </div>
+
+                <Alert variant="destructive" className="my-2 py-2">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle className="text-sm font-semibold">Security Warning</AlertTitle>
+                    <AlertDescription className="text-xs">
+                        Do not upload documents containing unredacted credit card numbers or bank account details. Please black out sensitive info before uploading.
+                    </AlertDescription>
+                </Alert>
+
                 {evidencePath && (
                     <div className="flex items-center justify-center gap-2 py-1 text-xs text-success bg-success/5 border-b">
                         <Check className="h-3 w-3" />
