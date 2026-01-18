@@ -82,12 +82,18 @@ export async function getUserProfile() {
 
     // If no profile exists, create a default one
     if (!profile) {
-        const defaultUsername = user.email?.split('@')[0] || 'user'
+        const metadata = user.user_metadata || {}
+        const defaultUsername = metadata.username || user.email?.split('@')[0] || 'user'
+        const firstName = metadata.first_name || null
+        const lastName = metadata.last_name || null
+
         const { data: newProfile, error: createError } = await supabase
             .from('profiles')
-            .insert({
+            .upsert({
                 id: user.id,
                 username: defaultUsername,
+                first_name: firstName,
+                last_name: lastName,
                 updated_at: new Date().toISOString()
             })
             .select()
@@ -100,8 +106,8 @@ export async function getUserProfile() {
                 profile: {
                     id: user.id,
                     username: defaultUsername,
-                    first_name: null,
-                    last_name: null,
+                    first_name: firstName,
+                    last_name: lastName,
                     email: user.email,
                     updated_at: new Date().toISOString()
                 }

@@ -20,8 +20,14 @@ export function Header({ title, showBack = false, backHref = '/' }: HeaderProps)
 
     React.useEffect(() => {
         const fetchUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-            setUser(user)
+            const { getUserProfile } = await import('@/actions/profile')
+            const result = await getUserProfile()
+            if ('profile' in result) {
+                setUser(result.profile)
+            } else {
+                const { data: { user: authUser } } = await supabase.auth.getUser()
+                setUser(authUser)
+            }
         }
         fetchUser()
     }, [supabase.auth])
