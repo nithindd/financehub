@@ -1,6 +1,4 @@
 import { createClient } from '@/utils/supabase/server'
-import { Header } from '@/components/layout/header'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getVendorSpend, getCategorySpend, getMonthlyFinancials } from '@/actions/analytics'
 import { VendorChart } from '@/components/analytics/vendor-chart'
@@ -8,6 +6,7 @@ import { CategoryChart } from '@/components/analytics/category-chart'
 import { MonthlyChart } from '@/components/analytics/monthly-chart'
 import { NetWorthChart } from '@/components/analytics/net-worth-chart'
 import { redirect } from 'next/navigation'
+import { DashboardShell } from '@/components/layout/dashboard-shell'
 
 export default async function AnalyticsPage() {
     const supabase = await createClient()
@@ -26,10 +25,8 @@ export default async function AnalyticsPage() {
     ])
 
     return (
-        <div className="flex min-h-screen flex-col bg-muted/20">
-            <Header title="Analytics" showBack backHref="/" />
-
-            <main className="container mx-auto p-4 sm:px-6 sm:py-8 max-w-7xl space-y-8">
+        <DashboardShell>
+            <div className="space-y-8">
                 <div className="flex flex-col gap-2">
                     <h1 className="text-3xl font-bold tracking-tight">Financial Insights</h1>
                     <p className="text-muted-foreground">
@@ -74,7 +71,7 @@ export default async function AnalyticsPage() {
                         <NetWorthChart data={monthlyData} />
                     </TabsContent>
                 </Tabs>
-            </main>
-        </div>
+            </div>
+        </DashboardShell>
     )
 }

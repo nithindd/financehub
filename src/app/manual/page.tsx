@@ -1,13 +1,26 @@
-import { Header } from '@/components/layout/header'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Camera, FileText, BarChart3, Settings, Info, CheckCircle2 } from 'lucide-react'
+import { Camera, FileText, BarChart3, Settings, Info, CheckCircle2, ArrowLeft } from 'lucide-react'
+import { DashboardShell } from '@/components/layout/dashboard-shell'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 
 export default async function ManualPage() {
     return (
-        <div className="flex min-h-screen flex-col bg-muted/20">
-            <Header title="User Manual" showBack={true} backHref="/profile" />
+        <DashboardShell>
+            <div className="flex flex-col gap-6">
+                {/* Page Header with Back Button */}
+                <div className="flex items-center gap-4">
+                    <Link href="/profile">
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <ArrowLeft className="h-4 w-4" />
+                        </Button>
+                    </Link>
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight">User Manual</h1>
+                        <p className="text-muted-foreground">Guide to using FinanceHub features.</p>
+                    </div>
+                </div>
 
-            <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8 pb-12">
                 <div className="mx-auto grid w-full max-w-4xl gap-6">
 
                     {/* Introduction */}
@@ -134,7 +147,7 @@ export default async function ManualPage() {
                     </Card>
 
                 </div>
-            </main>
-        </div>
+            </div>
+        </DashboardShell>
     )
 }

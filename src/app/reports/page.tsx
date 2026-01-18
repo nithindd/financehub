@@ -4,8 +4,8 @@ import { ReportSummary } from '@/components/reports/report-summary'
 import { TransactionTable } from '@/components/reports/transaction-table'
 import { ExportActions } from '@/components/reports/export-actions'
 import { startOfMonth, endOfMonth } from 'date-fns'
-import { Header } from '@/components/layout/header'
 import { createClient } from '@/utils/supabase/server'
+import { DashboardShell } from '@/components/layout/dashboard-shell'
 
 // Server Component
 export default async function ReportsPage({
@@ -17,7 +17,11 @@ export default async function ReportsPage({
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-        return <div className="p-8">Please log in to view reports.</div>
+        return (
+            <DashboardShell>
+                <div className="p-8">Please log in to view reports.</div>
+            </DashboardShell>
+        )
     }
 
     // Await searchParams before using properties
@@ -38,13 +42,20 @@ export default async function ReportsPage({
     const reportData = await getFinancialReport(startDate, endDate)
 
     if ('error' in reportData) {
-        return <div className="p-8 text-red-600">Error: {reportData.error}</div>
+        return (
+            <DashboardShell>
+                <div className="p-8 text-red-600">Error: {reportData.error}</div>
+            </DashboardShell>
+        )
     }
 
     return (
-        <div className="flex min-h-screen flex-col bg-muted/20">
-            <Header title="Financial Reports" showBack={true} />
-            <main className="container mx-auto flex-1 items-start gap-4 p-4 sm:px-6 sm:py-8 md:gap-8 max-w-7xl">
+        <DashboardShell>
+            <div className="flex flex-col gap-6">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">Financial Reports</h1>
+                    <p className="text-muted-foreground">View and export your transaction history.</p>
+                </div>
 
                 <ReportFilters />
 
@@ -62,8 +73,7 @@ export default async function ReportsPage({
                 </div>
 
                 <TransactionTable transactions={reportData.transactions} />
-
-            </main>
-        </div>
+            </div>
+        </DashboardShell>
     )
 }

@@ -48,20 +48,20 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                     ) : (
                         transactions.map((tx) => (
                             <div key={tx.id} className="flex items-center justify-between">
-                                <div className="flex items-center space-x-4">
-                                    <Avatar className="h-10 w-10 border bg-muted/50">
+                                <div className="flex items-center space-x-4 min-w-0 flex-1">
+                                    <Avatar className="h-10 w-10 border bg-muted/50 flex-shrink-0">
                                         <AvatarFallback className="bg-transparent text-muted-foreground">
                                             {getIcon(tx.category)}
                                         </AvatarFallback>
                                     </Avatar>
-                                    <div className="space-y-1">
-                                        <p className="text-sm font-medium leading-none truncate max-w-[150px] sm:max-w-xs">{tx.description}</p>
-                                        <p className="text-xs text-muted-foreground">
+                                    <div className="space-y-1 min-w-0">
+                                        <p className="text-sm font-medium leading-none truncate">{tx.description}</p>
+                                        <p className="text-xs text-muted-foreground truncate">
                                             {new Date(tx.date).toLocaleDateString()} &middot; <span className="capitalize">{tx.category}</span>
                                         </p>
                                     </div>
                                 </div>
-                                <div className="flex flex-col items-end gap-1">
+                                <div className="flex flex-col items-end gap-1 flex-shrink-0 pl-2">
                                     <span className={`font-bold ${tx.type === 'INCOME' ? 'text-green-600' : ''}`}>
                                         {tx.type === 'INCOME' ? '+' : '-'}{currencyFormatter.format(tx.amount)}
                                     </span>

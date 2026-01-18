@@ -41,13 +41,26 @@ interface LineItem {
     accountId: string
 }
 
-export function TransactionDialog({ children, defaultOpenOcr = false, onOpenChange }: { children: React.ReactNode, defaultOpenOcr?: boolean, onOpenChange?: (open: boolean) => void }) {
-    const [open, setInternalOpen] = useState(false)
+export function TransactionDialog({ children, defaultOpenOcr = false, open: controlledOpen, onOpenChange: setControlledOpen }: { children: React.ReactNode, defaultOpenOcr?: boolean, open?: boolean, onOpenChange?: (open: boolean) => void }) {
+    const [internalOpen, setInternalOpen] = useState(false)
+    const [showOcr, setShowOcr] = useState(defaultOpenOcr)
 
+    const isControlled = controlledOpen !== undefined
+    const open = isControlled ? controlledOpen : internalOpen
     const setOpen = (value: boolean) => {
-        setInternalOpen(value)
-        if (onOpenChange) onOpenChange(value)
+        if (isControlled) {
+            setControlledOpen?.(value)
+        } else {
+            setInternalOpen(value)
+        }
     }
+
+    useEffect(() => {
+        if (open && defaultOpenOcr) {
+            setShowOcr(true)
+        }
+    }, [open, defaultOpenOcr])
+
     const [date, setDate] = useState<Date | undefined>(new Date())
     const [description, setDescription] = useState('')
     const [rows, setRows] = useState<JournalEntryRow[]>([

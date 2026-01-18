@@ -2,7 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { getAccounts } from '@/actions/accounts'
 import { redirect } from 'next/navigation'
 import { CategoriesClient } from '@/components/settings/categories-client'
-import { Header } from '@/components/layout/header'
+import { DashboardShell } from '@/components/layout/dashboard-shell'
 
 export default async function CategoriesPage() {
     const supabase = await createClient()
@@ -13,14 +13,17 @@ export default async function CategoriesPage() {
     const accounts = await getAccounts()
 
     return (
-        <div className="flex min-h-screen flex-col bg-muted/20">
-            <Header title="Manage Categories" showBack={true} backHref="/profile" />
+        <DashboardShell>
+            <div className="flex flex-col gap-6">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">Manage Categories</h1>
+                    <p className="text-muted-foreground">Customize your income and expense categories.</p>
+                </div>
 
-            <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
                 <div className="mx-auto grid w-full max-w-4xl">
                     <CategoriesClient initialAccounts={accounts} />
                 </div>
-            </main>
-        </div>
+            </div>
+        </DashboardShell>
     )
 }

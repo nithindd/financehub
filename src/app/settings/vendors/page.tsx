@@ -3,7 +3,7 @@ import { getVendorMappings } from '@/actions/vendors'
 import { getAccounts } from '@/actions/accounts'
 import { redirect } from 'next/navigation'
 import { VendorMappingsClient } from '@/components/settings/vendor-mappings-client'
-import { Header } from '@/components/layout/header'
+import { DashboardShell } from '@/components/layout/dashboard-shell'
 
 export default async function VendorsPage() {
     const supabase = await createClient()
@@ -15,14 +15,17 @@ export default async function VendorsPage() {
     const accounts = await getAccounts()
 
     return (
-        <div className="flex min-h-screen flex-col bg-muted/20">
-            <Header title="Vendor Mappings" showBack={true} backHref="/profile" />
+        <DashboardShell>
+            <div className="flex flex-col gap-6">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">Vendor Mappings</h1>
+                    <p className="text-muted-foreground">Automate categorization by mapping vendors to accounts.</p>
+                </div>
 
-            <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
                 <div className="mx-auto grid w-full max-w-4xl">
                     <VendorMappingsClient initialMappings={mappings} accounts={accounts} />
                 </div>
-            </main>
-        </div>
+            </div>
+        </DashboardShell>
     )
 }

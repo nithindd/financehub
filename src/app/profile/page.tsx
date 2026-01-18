@@ -15,8 +15,8 @@ import { PasswordStrengthIndicator } from '@/components/password-strength-indica
 import { UsernameInput } from '@/components/username-input'
 import { TimezoneForm } from '@/components/profile/timezone-form'
 import QRCode from 'qrcode'
-import { Header } from '@/components/layout/header'
 import { deleteUserAccount } from '@/actions/user'
+import { DashboardShell } from '@/components/layout/dashboard-shell'
 import {
     Dialog,
     DialogContent,
@@ -204,18 +204,17 @@ export default function ProfilePage() {
 
     if (loading) {
         return (
-            <div className="flex min-h-screen items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
+            <DashboardShell>
+                <div className="flex items-center justify-center p-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+            </DashboardShell>
         )
     }
 
-
     return (
-        <div className="flex min-h-screen flex-col bg-muted/20">
-            <Header title="Profile Settings" showBack={true} backHref="/" />
-
-            <main className="container mx-auto py-8 px-4 max-w-4xl flex-1 mb-12">
+        <DashboardShell>
+            <div className="max-w-4xl mb-12">
                 <div className="mb-8">
                     <h1 className="text-2xl font-bold text-foreground">Account Settings</h1>
                     <p className="text-muted-foreground mt-1">Manage your personal information, security, and preferences</p>
@@ -532,7 +531,7 @@ export default function ProfilePage() {
                         </Card>
                     </TabsContent>
                 </Tabs>
-            </main>
-        </div >
+            </div>
+        </DashboardShell>
     )
 }

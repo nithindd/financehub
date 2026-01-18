@@ -4,11 +4,12 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, CreditCard, BarChart3, Settings, LogOut, ShieldCheck, FileText } from "lucide-react"
+import { LayoutDashboard, CreditCard, BarChart3, Settings, LogOut, ShieldCheck, FileText, Plus } from "lucide-react"
 import { createClient } from "@/utils/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useEffect, useState } from "react"
 import { User } from "@supabase/supabase-js"
+import { TransactionDialog } from "@/components/transaction-dialog"
 
 export function Sidebar() {
     const pathname = usePathname()
@@ -48,6 +49,15 @@ export function Sidebar() {
                 </div>
 
                 <div className="flex-1 overflow-auto py-2">
+                    <div className="px-4 mb-4">
+                        <TransactionDialog>
+                            <Button className="w-full gap-2" size="sm">
+                                <Plus className="h-4 w-4" />
+                                New Transaction
+                            </Button>
+                        </TransactionDialog>
+                    </div>
+
                     <nav className="grid items-start px-2 text-sm font-medium lg:px-4 gap-1">
                         {navItems.map((item, index) => (
                             <Link

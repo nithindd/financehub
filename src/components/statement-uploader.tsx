@@ -29,8 +29,18 @@ import { getAccounts, type Account } from '@/actions/accounts'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/utils/supabase/client'
 
-export function StatementUploader({ children }: { children: React.ReactNode }) {
-    const [open, setOpen] = useState(false)
+export function StatementUploader({ children, open: controlledOpen, onOpenChange: setControlledOpen }: { children: React.ReactNode, open?: boolean, onOpenChange?: (open: boolean) => void }) {
+    const [internalOpen, setInternalOpen] = useState(false)
+    const isControlled = controlledOpen !== undefined
+    const open = isControlled ? controlledOpen : internalOpen
+
+    const setOpen = (value: boolean) => {
+        if (isControlled) {
+            setControlledOpen?.(value)
+        } else {
+            setInternalOpen(value)
+        }
+    }
     const [loading, setLoading] = useState(false)
     const [importing, setImporting] = useState(false)
     const [rawData, setRawData] = useState<any[]>([])
