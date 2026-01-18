@@ -1,9 +1,8 @@
 'use server'
 
-import { createClient } from '@/utils/supabase/server'
-const pdfParse = require('pdf-parse')
 
 export async function parsePdfStatement(formData: FormData) {
+    const pdfParse = require('pdf-parse')
     const file = formData.get('file') as File
     if (!file) {
         return { success: false, error: 'No file provided' }
