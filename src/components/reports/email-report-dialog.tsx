@@ -138,6 +138,8 @@ export function EmailReportDialog({
             // Or we check which transactions have 'evidencePath' and pass those paths
             if (attachReceipts) {
                 const receiptPaths = data.filter(t => t.evidencePath).map(t => t.evidencePath)
+                console.log('[CLIENT DEBUG] Receipt paths to send:', receiptPaths)
+                console.log('[CLIENT DEBUG] Total receipt paths:', receiptPaths.length)
                 formData.append('receiptPaths', JSON.stringify(receiptPaths))
             }
 
