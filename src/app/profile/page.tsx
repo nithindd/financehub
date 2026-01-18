@@ -1,7 +1,9 @@
 'use client'
 
 import * as React from 'react'
+import { Suspense } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -11,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { User, Lock, Shield, AlertCircle, CheckCircle2, Loader2, Settings, HelpCircle } from 'lucide-react'
 import { PreferencesForm } from '@/components/profile/preferences-form'
 import { getUserProfile, updateProfile, enable2FA, verify2FA, disable2FA, get2FAFactors, getUserPreferences } from '@/actions/profile'
-import { updatePassword } from '@/actions/auth'
+import { updatePassword, signOut } from '@/actions/auth'
 import { PasswordStrengthIndicator } from '@/components/password-strength-indicator'
 import { UsernameInput } from '@/components/username-input'
 import QRCode from 'qrcode'
@@ -30,7 +32,8 @@ import {
 import { exportUserData } from '@/actions/export'
 import { Download } from 'lucide-react'
 
-export default function ProfilePage() {
+function ProfileContent() {
+    const searchParams = useSearchParams()
     const [profile, setProfile] = React.useState<any>(null)
     const [loading, setLoading] = React.useState(true)
     const [updateStatus, setUpdateStatus] = React.useState<{ type: 'success' | 'error'; message: string } | null>(null)
@@ -250,7 +253,7 @@ export default function ProfilePage() {
                     </Alert>
                 )}
 
-                <Tabs defaultValue="account" className="space-y-6">
+                <Tabs defaultValue={searchParams.get('tab') || 'account'} className="space-y-6">
                     <TabsList className={`grid w-full ${isOAuthUser ? 'grid-cols-3' : 'grid-cols-4'}`}>
                         <TabsTrigger value="account" className="flex items-center gap-2">
                             <User className="h-4 w-4" />
@@ -545,23 +548,48 @@ export default function ProfilePage() {
                                 <CardTitle>Management</CardTitle>
                                 <CardDescription>Manage categories and vendor mappings</CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-2">
-                                <Link href="/settings/categories">
-                                    <Button variant="outline" className="w-full justify-start">
-                                        Manage Categories
-                                    </Button>
+                            <CardContent className="grid gap-2">
+                                <Link href="/settings/categories" className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent hover:text-accent-foreground transition-colors group">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-primary/10 rounded-full group-hover:bg-primary/20 transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M3 3v18h18" /><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3" /></svg>
+                                        </div>
+                                        <span className="font-medium">Manage Categories</span>
+                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground group-hover:text-foreground transition-colors"><path d="m9 18 6-6-6-6" /></svg>
                                 </Link>
-                                <Link href="/settings/vendors">
-                                    <Button variant="outline" className="w-full justify-start">
-                                        Vendor Mappings
-                                    </Button>
+                                <Link href="/settings/vendors" className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent hover:text-accent-foreground transition-colors group">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-orange-500/10 rounded-full group-hover:bg-orange-500/20 transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-600"><path d="M3 21h18" /><path d="M5 21V7l8-4 8 4v14" /><path d="M8 21v-8h8v8" /></svg>
+                                        </div>
+                                        <span className="font-medium">Vendor Mappings</span>
+                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground group-hover:text-foreground transition-colors"><path d="m9 18 6-6-6-6" /></svg>
                                 </Link>
-
                             </CardContent>
                         </Card>
+
+                        <div className="mt-6 flex justify-center">
+                            <form action={signOut}>
+                                <Button variant="destructive" className="w-full sm:w-auto gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" x2="9" y1="12" y2="12" /></svg>
+                                    Sign Out
+                                </Button>
+                            </form>
+                        </div>
+
                     </TabsContent>
                 </Tabs>
             </div>
         </DashboardShell>
+    )
+}
+
+export default function ProfilePage() {
+    return (
+        <Suspense fallback={<div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+            <ProfileContent />
+        </Suspense>
     )
 }

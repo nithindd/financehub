@@ -42,7 +42,7 @@ interface LineItem {
     accountId: string
 }
 
-export function TransactionDialog({ children, defaultOpenOcr = false, open: controlledOpen, onOpenChange: setControlledOpen }: { children: React.ReactNode, defaultOpenOcr?: boolean, open?: boolean, onOpenChange?: (open: boolean) => void }) {
+export function TransactionDialog({ children, defaultOpenOcr = false, open: controlledOpen, onOpenChange: setControlledOpen, initialFile }: { children: React.ReactNode, defaultOpenOcr?: boolean, open?: boolean, onOpenChange?: (open: boolean) => void, initialFile?: File | null }) {
     const [internalOpen, setInternalOpen] = useState(false)
     const [showOcr, setShowOcr] = useState(defaultOpenOcr)
 
@@ -56,11 +56,29 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
         }
     }
 
+    // Effect to process initial file if provided
     useEffect(() => {
-        if (open && defaultOpenOcr) {
+        if (open && initialFile) {
+            const processInitialFile = async () => {
+                const event = {
+                    target: {
+                        files: [initialFile]
+                    }
+                } as unknown as React.ChangeEvent<HTMLInputElement>
+                await handleFileUpload(event)
+            }
+            processInitialFile()
+        }
+    }, [open, initialFile])
+
+    useEffect(() => {
+        if (open && defaultOpenOcr && !initialFile) {
             setShowOcr(true)
         }
-    }, [open, defaultOpenOcr])
+        if (open && initialFile) {
+            setMode('scan')
+        }
+    }, [open, defaultOpenOcr, initialFile])
 
     const [date, setDate] = useState<Date | undefined>(new Date())
     const [vendor, setVendor] = useState('')
@@ -86,18 +104,13 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
     const [exchangeRate, setExchangeRate] = useState('1.0')
     const [userBaseCurrency, setUserBaseCurrency] = useState('USD')
 
-    // ... (previous logic)
-
-
-
-
-    // Fetch accounts on open
     // Fetch accounts on open
     useEffect(() => {
         if (open) {
             getAccounts().then(setAccounts)
             getUserPreferences().then(prefs => {
                 if (prefs.currency) {
+
                     setCurrency(prefs.currency)
                     setUserBaseCurrency(prefs.currency)
                 }
@@ -204,7 +217,10 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
                 // Switch to edit mode to show the form with populated data
                 setMode('edit')
 
-                if (vendor) setVendor(vendor)
+                if (vendor) {
+                    setVendor(vendor)
+                    setDescription(vendor)
+                }
 
 
                 // Find potential accounts

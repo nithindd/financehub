@@ -87,10 +87,7 @@ export function Sidebar() {
                             <DropdownMenuContent align="start" className="w-56">
                                 <DropdownMenuLabel>Add Transaction</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => setActiveSheet('scan')}>
-                                    <Camera className="mr-2 h-4 w-4" />
-                                    <span>Scan Invoice</span>
-                                </DropdownMenuItem>
+                                {/* Scan Invoice removed for Desktop */}
                                 <DropdownMenuItem onClick={() => setActiveSheet('manual')}>
                                     <Receipt className="mr-2 h-4 w-4" />
                                     <span>Manual Entry</span>

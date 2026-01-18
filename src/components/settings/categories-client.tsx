@@ -197,55 +197,57 @@ export function CategoriesClient({ initialAccounts }: CategoriesClientProps) {
                                         </div>
 
 
-                                        <div className="mt-2 pl-4 border-l-2 ml-1 flex flex-col gap-2">
-                                            <div className="flex items-center justify-between">
-                                                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Linked Cards</p>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-6 text-[10px] px-2"
-                                                    onClick={() => openAddPm(account.id)}
-                                                >
-                                                    <Plus className="h-3 w-3 mr-1" /> Add Card
-                                                </Button>
+                                        {['ASSET', 'LIABILITY'].includes(account.type) && (
+                                            <div className="mt-2 pl-4 border-l-2 ml-1 flex flex-col gap-2">
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Linked Cards</p>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-6 text-[10px] px-2"
+                                                        onClick={() => openAddPm(account.id)}
+                                                    >
+                                                        <Plus className="h-3 w-3 mr-1" /> Add Card
+                                                    </Button>
+                                                </div>
+                                                {account.payment_methods && account.payment_methods.length > 0 ? (
+                                                    account.payment_methods.map(pm => (
+                                                        <div key={pm.id} className="flex items-center justify-between text-sm bg-muted/40 p-2 rounded-md group">
+                                                            <div className="flex items-center gap-3">
+                                                                <CreditCard className="w-4 h-4 text-muted-foreground" />
+                                                                <span>{pm.name}</span>
+                                                                <Badge variant="outline" className="text-[10px] h-5 font-mono">
+                                                                    ...{pm.last_four}
+                                                                </Badge>
+                                                                <span className="text-[10px] text-muted-foreground uppercase">{pm.type.replace('_', ' ')}</span>
+                                                            </div>
+                                                            <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-6 w-6"
+                                                                    onClick={() => openEditPm(pm)}
+                                                                    title="Edit Card"
+                                                                >
+                                                                    <Pencil className="h-3 w-3" />
+                                                                </Button>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-6 w-6 text-destructive hover:text-destructive"
+                                                                    onClick={() => handleDeletePm(pm)}
+                                                                    title="Remove Card"
+                                                                >
+                                                                    <Trash2 className="h-3 w-3" />
+                                                                </Button>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <p className="text-[10px] text-muted-foreground italic">No cards linked</p>
+                                                )}
                                             </div>
-                                            {account.payment_methods && account.payment_methods.length > 0 ? (
-                                                account.payment_methods.map(pm => (
-                                                    <div key={pm.id} className="flex items-center justify-between text-sm bg-muted/40 p-2 rounded-md group">
-                                                        <div className="flex items-center gap-3">
-                                                            <CreditCard className="w-4 h-4 text-muted-foreground" />
-                                                            <span>{pm.name}</span>
-                                                            <Badge variant="outline" className="text-[10px] h-5 font-mono">
-                                                                ...{pm.last_four}
-                                                            </Badge>
-                                                            <span className="text-[10px] text-muted-foreground uppercase">{pm.type.replace('_', ' ')}</span>
-                                                        </div>
-                                                        <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-6 w-6"
-                                                                onClick={() => openEditPm(pm)}
-                                                                title="Edit Card"
-                                                            >
-                                                                <Pencil className="h-3 w-3" />
-                                                            </Button>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-6 w-6 text-destructive hover:text-destructive"
-                                                                onClick={() => handleDeletePm(pm)}
-                                                                title="Remove Card"
-                                                            >
-                                                                <Trash2 className="h-3 w-3" />
-                                                            </Button>
-                                                        </div>
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <p className="text-[10px] text-muted-foreground italic">No cards linked</p>
-                                            )}
-                                        </div>
+                                        )}
                                     </div>
                                 ))}
                                 {accts.length === 0 && (

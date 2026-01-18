@@ -21,7 +21,7 @@ export default async function VendorsPage() {
         <DashboardShell>
             <div className="flex flex-col gap-6">
                 <div className="flex items-center gap-4">
-                    <Link href="/profile">
+                    <Link href="/profile?tab=settings">
                         <Button variant="ghost" size="icon" className="h-8 w-8">
                             <ArrowLeft className="h-4 w-4" />
                         </Button>
