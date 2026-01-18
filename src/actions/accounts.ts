@@ -26,6 +26,7 @@ export async function getAccountBalances(): Promise<AccountBalance[]> {
         .from('accounts')
         .select(`
             *,
+            payment_methods (*),
             journal_entries (
                 amount,
                 entry_type
@@ -56,13 +57,63 @@ export async function getAccountBalances(): Promise<AccountBalance[]> {
             }
         })
 
+        // Update return type to include payment methods
         return {
             id: account.id,
             name: account.name,
             type: account.type,
-            balance: balance
+            balance: balance,
+            payment_methods: account.payment_methods || []
         }
     })
+}
+
+export async function addPaymentMethod(
+    accountId: string,
+    type: 'DEBIT_CARD' | 'CREDIT_CARD',
+    name: string,
+    lastFour: string
+) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    // Basic validation
+    if (!/^\d{4}$/.test(lastFour)) {
+        return { error: 'Last four digits must be exactly 4 numbers' }
+    }
+
+    const { error } = await supabase
+        .from('payment_methods')
+        .insert({
+            user_id: user.id,
+            account_id: accountId,
+            type,
+            name,
+            last_four: lastFour
+        })
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/settings/categories')
+    return { success: true }
+}
+
+export async function deletePaymentMethod(methodId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Unauthorized' }
+
+    const { error } = await supabase
+        .from('payment_methods')
+        .delete()
+        .eq('id', methodId)
+        .eq('user_id', user.id)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/settings/categories')
+    return { success: true }
 }
 
 export async function getAccounts() {

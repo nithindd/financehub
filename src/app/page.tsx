@@ -10,6 +10,7 @@ import { DashboardShell } from '@/components/layout/dashboard-shell'
 import { AccountCards } from '@/components/dashboard/account-cards'
 import { RecentTransactions } from '@/components/dashboard/recent-transactions'
 import { NetWorthChart } from '@/components/analytics/net-worth-chart'
+import { EmptyDashboardState } from '@/components/dashboard/empty-state'
 
 export default async function Page() {
   const supabase = await createClient()
@@ -48,16 +49,22 @@ export default async function Page() {
             </div>
           </div>
 
-          <AccountCards accounts={accountBalances} />
+          {accountBalances.every(acc => acc.balance === 0) && recentTransactions.length === 0 ? (
+            <EmptyDashboardState userName={user.user_metadata?.full_name?.split(' ')[0] || 'User'} />
+          ) : (
+            <>
+              <AccountCards accounts={accountBalances} />
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-            <div className="col-span-4 lg:col-span-5">
-              <NetWorthChart data={monthlyData} />
-            </div>
-            <div className="col-span-4 lg:col-span-2">
-              <RecentTransactions transactions={recentTransactions} />
-            </div>
-          </div>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+                <div className="col-span-4 lg:col-span-5">
+                  <NetWorthChart data={monthlyData} />
+                </div>
+                <div className="col-span-4 lg:col-span-2">
+                  <RecentTransactions transactions={recentTransactions} />
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </DashboardShell>
     )
