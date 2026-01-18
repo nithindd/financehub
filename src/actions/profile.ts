@@ -117,7 +117,8 @@ export async function getUserProfile() {
         return {
             profile: {
                 ...newProfile,
-                email: user.email
+                email: user.email,
+                provider: user.app_metadata?.provider || 'email'
             }
         }
     }
