@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { Account, AccountType, createAccount, updateAccount, deleteAccount } from '@/actions/accounts'
+import { Account, AccountType, updateAccount, deleteAccount } from '@/actions/accounts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'

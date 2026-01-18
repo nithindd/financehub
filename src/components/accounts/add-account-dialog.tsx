@@ -103,8 +103,8 @@ export function AddAccountDialog({ open, onOpenChange }: AddAccountDialogProps) 
 
             const result = await createAccount(name, type)
 
-            if (result.error || !result.data) {
-                throw new Error(result.error || 'Failed to create account')
+            if ('error' in result) {
+                throw new Error(result.error)
             }
 
             const accountId = result.data.id
