@@ -24,7 +24,7 @@ export function NetWorthChart({ data }: NetWorthChartProps) {
     }
 
     return (
-        <Card className="col-span-2">
+        <Card className="col-span-2 h-full">
             <CardHeader>
                 <CardTitle>Net Savings Growth</CardTitle>
                 <CardDescription>Monthly savings accumulation</CardDescription>

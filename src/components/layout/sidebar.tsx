@@ -4,16 +4,26 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, CreditCard, BarChart3, Settings, LogOut, ShieldCheck, FileText, Plus } from "lucide-react"
+import { LayoutDashboard, CreditCard, BarChart3, Settings, LogOut, ShieldCheck, FileText, Plus, Camera, Receipt, Upload } from "lucide-react"
 import { createClient } from "@/utils/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useEffect, useState } from "react"
 import { User } from "@supabase/supabase-js"
 import { TransactionDialog } from "@/components/transaction-dialog"
+import { StatementUploader } from "@/components/statement-uploader"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export function Sidebar() {
     const pathname = usePathname()
     const [user, setUser] = useState<User | null>(null)
+    const [activeSheet, setActiveSheet] = useState<'scan' | 'manual' | 'upload' | null>(null)
 
     useEffect(() => {
         const getUser = async () => {
@@ -32,10 +42,10 @@ export function Sidebar() {
 
     const navItems = [
         { name: "Dashboard", href: "/", icon: LayoutDashboard },
-        { name: "Transactions", href: "/#recent-transactions", icon: CreditCard }, // Placeholder link
+        // "Transactions" replaced by "New Transaction" action
         { name: "Analytics", href: "/analytics", icon: BarChart3 },
         { name: "Reports", href: "/reports", icon: FileText },
-        { name: "Settings", href: "/settings/categories", icon: Settings },
+        { name: "Settings", href: "/profile", icon: Settings },
     ]
 
     return (
@@ -49,31 +59,80 @@ export function Sidebar() {
                 </div>
 
                 <div className="flex-1 overflow-auto py-2">
-                    <div className="px-4 mb-4">
-                        <TransactionDialog>
-                            <Button className="w-full gap-2" size="sm">
-                                <Plus className="h-4 w-4" />
-                                New Transaction
-                            </Button>
-                        </TransactionDialog>
-                    </div>
-
                     <nav className="grid items-start px-2 text-sm font-medium lg:px-4 gap-1">
-                        {navItems.map((item, index) => (
-                            <Link
-                                key={index}
-                                href={item.href}
-                                className={cn(
-                                    "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
-                                    pathname === item.href
-                                        ? "bg-muted text-primary"
-                                        : "text-muted-foreground"
-                                )}
-                            >
-                                <item.icon className="h-4 w-4" />
-                                {item.name}
-                            </Link>
-                        ))}
+                        <Link
+                            href="/"
+                            className={cn(
+                                "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
+                                pathname === '/' ? "bg-muted text-primary" : "text-muted-foreground"
+                            )}
+                        >
+                            <LayoutDashboard className="h-4 w-4" />
+                            Dashboard
+                        </Link>
+
+                        {/* New Transaction Dropdown Trigger */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button
+                                    className={cn(
+                                        "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary w-full text-left text-muted-foreground hover:bg-muted"
+                                    )}
+                                >
+                                    <Plus className="h-4 w-4" />
+                                    New Transaction
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-56">
+                                <DropdownMenuLabel>Add Transaction</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => setActiveSheet('scan')}>
+                                    <Camera className="mr-2 h-4 w-4" />
+                                    <span>Scan Invoice</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setActiveSheet('manual')}>
+                                    <Receipt className="mr-2 h-4 w-4" />
+                                    <span>Manual Entry</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setActiveSheet('upload')}>
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    <span>Upload Statement</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+
+                        <Link
+                            href="/analytics"
+                            className={cn(
+                                "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
+                                pathname === '/analytics' ? "bg-muted text-primary" : "text-muted-foreground"
+                            )}
+                        >
+                            <BarChart3 className="h-4 w-4" />
+                            Analytics
+                        </Link>
+
+                        <Link
+                            href="/reports"
+                            className={cn(
+                                "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
+                                pathname === '/reports' ? "bg-muted text-primary" : "text-muted-foreground"
+                            )}
+                        >
+                            <FileText className="h-4 w-4" />
+                            Reports
+                        </Link>
+
+                        <Link
+                            href="/profile"
+                            className={cn(
+                                "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary",
+                                pathname === '/profile' ? "bg-muted text-primary" : "text-muted-foreground"
+                            )}
+                        >
+                            <Settings className="h-4 w-4" />
+                            Settings
+                        </Link>
                     </nav>
                 </div>
 
@@ -96,6 +155,29 @@ export function Sidebar() {
                     </Button>
                 </div>
             </div>
+
+            {/* Hoisted Dialogs controlled by state */}
+            <TransactionDialog
+                defaultOpenOcr={true}
+                open={activeSheet === 'scan'}
+                onOpenChange={(open) => !open && setActiveSheet(null)}
+            >
+                <span className="hidden"></span>
+            </TransactionDialog>
+
+            <TransactionDialog
+                open={activeSheet === 'manual'}
+                onOpenChange={(open) => !open && setActiveSheet(null)}
+            >
+                <span className="hidden"></span>
+            </TransactionDialog>
+
+            <StatementUploader
+                open={activeSheet === 'upload'}
+                onOpenChange={(open) => !open && setActiveSheet(null)}
+            >
+                <span className="hidden"></span>
+            </StatementUploader>
         </div>
     )
 }

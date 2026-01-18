@@ -55,14 +55,6 @@ export function AccountCards({ accounts }: AccountCardsProps) {
                             {account.type === 'ASSET' ? 'Available Balance' : 'Outstanding Balance'}
                         </p>
 
-                        <div className="flex items-center gap-2 mt-4">
-                            <Button size="sm" className="w-full h-8 text-xs bg-orange-500 hover:bg-orange-600 text-white">
-                                Send
-                            </Button>
-                            <Button size="sm" variant="outline" className="w-full h-8 text-xs">
-                                Receive
-                            </Button>
-                        </div>
                     </CardContent>
                 </Card>
             ))}
