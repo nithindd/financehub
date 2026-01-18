@@ -27,6 +27,9 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 
+import { exportUserData } from '@/actions/export'
+import { Download } from 'lucide-react'
+
 export default function ProfilePage() {
     const [profile, setProfile] = React.useState<any>(null)
     const [loading, setLoading] = React.useState(true)
@@ -59,9 +62,14 @@ export default function ProfilePage() {
     const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
     const [isDeleting, setIsDeleting] = React.useState(false)
 
+    // Export State
+    const [isExporting, setIsExporting] = React.useState(false)
+
     React.useEffect(() => {
         loadProfile()
     }, [])
+
+    // ... [Previous handler functions: loadProfile, handleUpdateProfile, handleChangePassword, handleEnable2FA, handleVerify2FA, handleDisable2FA] ...
 
     async function loadProfile() {
         setLoading(true)
@@ -202,6 +210,20 @@ export default function ProfilePage() {
         }
     }
 
+    async function handleExportData() {
+        setIsExporting(true)
+        setUpdateStatus({ type: 'success', message: 'Export initiated. You will receive an email shortly.' })
+
+        const result = await exportUserData()
+
+        if (result.error) {
+            setUpdateStatus({ type: 'error', message: result.error })
+        } else {
+            // Success message already set conservatively, but we can update if needed
+        }
+        setIsExporting(false)
+    }
+
     if (loading) {
         return (
             <DashboardShell>
@@ -248,13 +270,9 @@ export default function ProfilePage() {
                             <Settings className="h-4 w-4" />
                             Settings
                         </TabsTrigger>
-                        <TabsTrigger value="danger" className="flex items-center gap-2 text-destructive data-[state=active]:text-destructive">
-                            <AlertCircle className="h-4 w-4" />
-                            Danger Zone
-                        </TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="account">
+                    <TabsContent value="account" className="space-y-6">
                         <Card>
                             <CardHeader>
                                 <CardTitle>Personal Information</CardTitle>
@@ -334,6 +352,57 @@ export default function ProfilePage() {
                                         </Alert>
                                     </>
                                 )}
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Data & Privacy</CardTitle>
+                                <CardDescription>Manage your data export and deletion</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="space-y-4">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
+                                        <div className="space-y-1">
+                                            <h4 className="font-medium">Export Your Data</h4>
+                                            <p className="text-sm text-muted-foreground">Download a copy of your personal data, transactions, and account history.</p>
+                                        </div>
+                                        <Button variant="outline" onClick={handleExportData} disabled={isExporting}>
+                                            {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                                            Export Data
+                                        </Button>
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                        <div className="space-y-1">
+                                            <h4 className="font-medium text-destructive">Delete Account</h4>
+                                            <p className="text-sm text-muted-foreground">Permanently delete your account and all associated data. This action cannot be undone.</p>
+                                        </div>
+                                        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                                            <DialogTrigger asChild>
+                                                <Button variant="destructive">Delete Account</Button>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>Are you absolutely sure?</DialogTitle>
+                                                    <DialogDescription>
+                                                        This action cannot be undone. This will permanently delete your account,
+                                                        transactions, and remove your data from our servers.
+                                                    </DialogDescription>
+                                                </DialogHeader>
+                                                <DialogFooter>
+                                                    <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={isDeleting}>
+                                                        Cancel
+                                                    </Button>
+                                                    <Button variant="destructive" onClick={handleDeleteAccount} disabled={isDeleting}>
+                                                        {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                                        Yes, Delete My Account
+                                                    </Button>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -488,41 +557,6 @@ export default function ProfilePage() {
                                     </Button>
                                 </Link>
 
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                    <TabsContent value="danger">
-                        <Card className="border-destructive/50 bg-destructive/5">
-                            <CardHeader>
-                                <CardTitle className="text-destructive">Delete Account</CardTitle>
-                                <CardDescription className="text-destructive/80">
-                                    Permanently delete your account and all associated data. This action cannot be undone.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                                    <DialogTrigger asChild>
-                                        <Button variant="destructive">Delete Account</Button>
-                                    </DialogTrigger>
-                                    <DialogContent>
-                                        <DialogHeader>
-                                            <DialogTitle>Are you absolutely sure?</DialogTitle>
-                                            <DialogDescription>
-                                                This action cannot be undone. This will permanently delete your account,
-                                                transactions, and remove your data from our servers.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <DialogFooter>
-                                            <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={isDeleting}>
-                                                Cancel
-                                            </Button>
-                                            <Button variant="destructive" onClick={handleDeleteAccount} disabled={isDeleting}>
-                                                {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                                Yes, Delete My Account
-                                            </Button>
-                                        </DialogFooter>
-                                    </DialogContent>
-                                </Dialog>
                             </CardContent>
                         </Card>
                     </TabsContent>
