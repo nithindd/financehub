@@ -43,6 +43,12 @@ export function EmailReportDialog({
     const [attachReceipts, setAttachReceipts] = React.useState(false)
     const [isSending, setIsSending] = React.useState(false)
 
+    React.useEffect(() => {
+        if (defaultEmail) {
+            setEmail(defaultEmail)
+        }
+    }, [defaultEmail])
+
     // Generate CSV Blob
     const generateCsvUser = () => {
         const expandedData = data.flatMap(t =>
