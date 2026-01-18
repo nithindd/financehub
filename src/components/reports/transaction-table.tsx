@@ -3,7 +3,7 @@
 import { ReportTransaction } from "@/actions/reports"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Pencil, Trash2, Paperclip, Layers } from "lucide-react"
+import { Pencil, Trash2, Paperclip, Layers, ChevronDown, ChevronRight } from "lucide-react"
 import { EvidenceLink } from "@/components/evidence-link"
 import { deleteTransaction } from "@/actions/transactions"
 import { EditTransactionDialog } from "./edit-transaction-dialog"
@@ -72,7 +72,11 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                                     onClick={() => setExpandedId(expandedId === tx.id ? null : tx.id)}
                                 >
                                     <td className="p-4 align-middle italic text-xs text-muted-foreground">
-                                        {expandedId === tx.id ? '▼' : '▶'}
+                                        {expandedId === tx.id ? (
+                                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                        ) : (
+                                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                        )}
                                     </td>
                                     <td className="p-4 align-middle">
                                         {new Date(tx.date).toLocaleDateString(undefined, { timeZone: 'UTC' })}
