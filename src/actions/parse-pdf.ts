@@ -3,7 +3,7 @@
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
-const GEN_AI_MODEL = "gemini-1.5-flash"; // Flash is fast and good for high-volume text
+const GEN_AI_MODEL = "gemini-3-flash-preview";
 
 export async function parsePdfStatement(formData: FormData) {
     const file = formData.get('file') as File
