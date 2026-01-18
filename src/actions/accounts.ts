@@ -11,6 +11,60 @@ export interface Account {
     type: AccountType
 }
 
+export interface AccountBalance extends Account {
+    balance: number
+}
+
+export async function getAccountBalances(): Promise<AccountBalance[]> {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return []
+
+    // Fetch accounts with their journal entries
+    const { data, error } = await supabase
+        .from('accounts')
+        .select(`
+            *,
+            journal_entries (
+                amount,
+                entry_type
+            )
+        `)
+        .order('name')
+
+    if (error) {
+        console.error('Error fetching account balances:', error)
+        return []
+    }
+
+    return data.map((account: any) => {
+        let balance = 0
+
+        // Calculate balance based on account type normal side
+        // Asset/Expense: Debit is +
+        // Liab/Equity/Income: Credit is +
+
+        account.journal_entries.forEach((entry: any) => {
+            const amount = parseFloat(entry.amount)
+            if (account.type === 'ASSET' || account.type === 'EXPENSE') {
+                if (entry.entry_type === 'DEBIT') balance += amount
+                else balance -= amount
+            } else {
+                if (entry.entry_type === 'CREDIT') balance += amount
+                else balance -= amount
+            }
+        })
+
+        return {
+            id: account.id,
+            name: account.name,
+            type: account.type,
+            balance: balance
+        }
+    })
+}
+
 export async function getAccounts() {
     const supabase = await createClient()
 

@@ -1,20 +1,34 @@
 import { createClient } from '@/utils/supabase/server'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { PlusCircle, FileText, Camera, BarChart3, Settings, Info, CheckCircle2, ShieldCheck, ArrowRight } from 'lucide-react'
-import { AccountSeeder } from '@/components/account-seeder'
-import { TransactionDialog } from '@/components/transaction-dialog'
-import { StatementUploader } from '@/components/statement-uploader'
-import { getDashboardMetrics } from '@/actions/dashboard'
-import { Header } from '@/components/layout/header'
+import { ArrowRight, Camera, FileText, BarChart3, Settings, Info, CheckCircle2, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { getAccountBalances } from '@/actions/accounts'
+import { getMonthlyFinancials } from '@/actions/analytics'
+import { getFinancialReport } from '@/actions/reports'
+import { DashboardShell } from '@/components/layout/dashboard-shell'
+import { AccountCards } from '@/components/dashboard/account-cards'
+import { RecentTransactions } from '@/components/dashboard/recent-transactions'
+import { NetWorthChart } from '@/components/analytics/net-worth-chart'
 
 export default async function Page() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (user) {
-    const metrics = await getDashboardMetrics()
+    // 1. Fetch Account Balances
+    const accountBalances = await getAccountBalances()
+
+    // 2. Fetch Monthly Financials for Chart (Last 6 months)
+    const today = new Date()
+    const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1)
+    const monthlyData = await getMonthlyFinancials(sixMonthsAgo, today)
+
+    // 3. Fetch Recent Transactions (Current month/Recent activity)
+    // We'll fetch last 30 days for display in list
+    const thirtyDaysAgo = new Date(today.setDate(today.getDate() - 30))
+    const reportData = await getFinancialReport(thirtyDaysAgo, new Date())
+    const recentTransactions = 'error' in reportData ? [] : reportData.transactions.slice(0, 5)
 
     const currencyFormatter = new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -22,124 +36,30 @@ export default async function Page() {
     })
 
     return (
-      <div className="flex min-h-screen flex-col bg-muted/20">
-        <Header title="FinanceHub" />
-        <AccountSeeder />
-
-        <main className="container mx-auto grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-8 md:gap-8 max-w-7xl">
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <TransactionDialog defaultOpenOcr={true}>
-              <Button className="h-24 flex-col gap-2 bg-primary/10 text-primary hover:bg-primary/20 md:hidden" variant="outline">
-                <Camera className="h-6 w-6" />
-                <span>Scan Invoice</span>
-              </Button>
-            </TransactionDialog>
-
-            <StatementUploader>
-              <Button className="h-24 flex-col gap-2 bg-primary/10 text-primary hover:bg-primary/20" variant="outline">
-                <FileText className="h-6 w-6" />
-                <span>Upload Statement</span>
-              </Button>
-            </StatementUploader>
-
-            <Link href="/reports">
-              <Button className="h-24 w-full flex-col gap-2 bg-primary/10 text-primary hover:bg-primary/20" variant="outline">
-                <FileText className="h-6 w-6" />
-                <span>View Reports</span>
-              </Button>
-            </Link>
-
-            <Link href="/analytics">
-              <Button className="h-24 w-full flex-col gap-2 bg-primary/10 text-primary hover:bg-primary/20" variant="outline">
-                <BarChart3 className="h-6 w-6" />
-                <span>Analytics</span>
-              </Button>
-            </Link>
-
-            <TransactionDialog>
-              <Button className="h-24 flex-col gap-2" variant="outline">
-                <PlusCircle className="h-6 w-6" />
-                <span>New Transaction</span>
-              </Button>
-            </TransactionDialog>
+      <DashboardShell>
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Welcome back, {user.user_metadata?.full_name?.split(' ')[0] || 'User'}</h1>
+              <p className="text-muted-foreground">Here&apos;s your financial overview.</p>
+            </div>
+            <div className="hidden md:flex items-center gap-2">
+              {/* Desktop Header Actions if needed */}
+            </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Income</CardTitle>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  className="h-4 w-4 text-success"
-                >
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                </svg>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-success">
-                  {currencyFormatter.format(metrics.totalIncome)}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Lifetime
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  className="h-4 w-4 text-destructive"
-                >
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                </svg>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-destructive">
-                  {currencyFormatter.format(metrics.totalExpenses)}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Lifetime
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  className="h-4 w-4 text-primary"
-                >
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                </svg>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {currencyFormatter.format(metrics.netProfit)}
-                </div>
-              </CardContent>
-            </Card>
+          <AccountCards accounts={accountBalances} />
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+            <div className="col-span-4 lg:col-span-5">
+              <NetWorthChart data={monthlyData} />
+            </div>
+            <div className="col-span-4 lg:col-span-2">
+              <RecentTransactions transactions={recentTransactions} />
+            </div>
           </div>
-        </main>
-      </div>
+        </div>
+      </DashboardShell>
     )
   }
 
@@ -175,11 +95,9 @@ export default async function Page() {
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white pt-16 pb-32">
           <div className="container mx-auto px-4 text-center sm:px-8">
-            <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl text-primary mb-6">
-              Professional Accounting,<br className="hidden sm:inline" /> Simplified by AI.
-            </h1>
-            <p className="mx-auto max-w-2xl text-lg text-muted-foreground mb-10">
-              Stop manually typing receipts. FinanceHub uses advanced AI to extract line items, categorize expenses, and generate professional financial reports in seconds.
+            <h2 className="text-3xl font-bold tracking-tight mb-6">Ready to take control of your finances?</h2>
+            <p className="mx-auto max-w-2xl text-lg text-primary-foreground/80 mb-10">
+              Switch to FinanceHub today for smarter, faster accounting.
             </p>
             <div className="flex justify-center gap-4">
               <Link href="/signup">

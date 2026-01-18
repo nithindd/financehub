@@ -41,8 +41,13 @@ interface LineItem {
     accountId: string
 }
 
-export function TransactionDialog({ children, defaultOpenOcr = false }: { children: React.ReactNode, defaultOpenOcr?: boolean }) {
-    const [open, setOpen] = useState(false)
+export function TransactionDialog({ children, defaultOpenOcr = false, onOpenChange }: { children: React.ReactNode, defaultOpenOcr?: boolean, onOpenChange?: (open: boolean) => void }) {
+    const [open, setInternalOpen] = useState(false)
+
+    const setOpen = (value: boolean) => {
+        setInternalOpen(value)
+        if (onOpenChange) onOpenChange(value)
+    }
     const [date, setDate] = useState<Date | undefined>(new Date())
     const [description, setDescription] = useState('')
     const [rows, setRows] = useState<JournalEntryRow[]>([
