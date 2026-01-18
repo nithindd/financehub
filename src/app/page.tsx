@@ -12,29 +12,31 @@ import { RecentTransactions } from '@/components/dashboard/recent-transactions'
 import { NetWorthChart } from '@/components/analytics/net-worth-chart'
 import { EmptyDashboardState } from '@/components/dashboard/empty-state'
 
+import { getUserPreferences } from '@/actions/profile'
+// ...
+
 export default async function Page() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (user) {
-    // 1. Fetch Account Balances
-    const accountBalances = await getAccountBalances()
+    // 1. Fetch Account Balances & Preferences
+    const [accountBalances, preferences] = await Promise.all([
+      getAccountBalances(),
+      getUserPreferences()
+    ])
+
+    const { currency, locale } = preferences as any // Type assertion if needed or fix types
 
     // 2. Fetch Monthly Financials for Chart (Last 6 months)
     const today = new Date()
     const sixMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 5, 1)
     const monthlyData = await getMonthlyFinancials(sixMonthsAgo, today)
 
-    // 3. Fetch Recent Transactions (Current month/Recent activity)
-    // We'll fetch last 30 days for display in list
+    // 3. Fetch Recent Transactions
     const thirtyDaysAgo = new Date(today.setDate(today.getDate() - 30))
     const reportData = await getFinancialReport(thirtyDaysAgo, new Date())
     const recentTransactions = 'error' in reportData ? [] : reportData.transactions.slice(0, 5)
-
-    const currencyFormatter = new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    })
 
     return (
       <DashboardShell>
@@ -44,23 +46,28 @@ export default async function Page() {
               <h1 className="text-2xl font-bold tracking-tight">Welcome back, {user.user_metadata?.full_name?.split(' ')[0] || 'User'}</h1>
               <p className="text-muted-foreground">Here&apos;s your financial overview.</p>
             </div>
-            <div className="hidden md:flex items-center gap-2">
-              {/* Desktop Header Actions if needed */}
-            </div>
           </div>
 
           {accountBalances.every(acc => acc.balance === 0) && recentTransactions.length === 0 ? (
             <EmptyDashboardState userName={user.user_metadata?.full_name?.split(' ')[0] || 'User'} />
           ) : (
             <>
-              <AccountCards accounts={accountBalances} />
+              <AccountCards
+                accounts={accountBalances}
+                currency={currency || 'USD'}
+                locale={locale || 'en-US'}
+              />
 
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
                 <div className="col-span-4 lg:col-span-5">
                   <NetWorthChart data={monthlyData} />
                 </div>
                 <div className="col-span-4 lg:col-span-2">
-                  <RecentTransactions transactions={recentTransactions} />
+                  <RecentTransactions
+                    transactions={recentTransactions}
+                    currency={currency || 'USD'}
+                    locale={locale || 'en-US'}
+                  />
                 </div>
               </div>
             </>

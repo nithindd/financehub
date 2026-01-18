@@ -17,6 +17,8 @@ export interface TransactionInput {
     parentId?: string
     vendor?: string
     items?: any[]
+    currency?: string
+    exchangeRate?: number
 }
 
 export async function createTransaction(input: TransactionInput) {
@@ -24,7 +26,13 @@ export async function createTransaction(input: TransactionInput) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { success: false, error: 'Unauthorized' }
 
-    // 1. Validate Balance
+    // Constants for multi-currency
+    const currency = input.currency || 'USD'
+    const exchangeRate = input.exchangeRate || 1.0
+
+    // 1. Validate Balance (in Abstract/Original term)
+    // The entries passed from UI are usually in the "Transaction Currency".
+    // We need to verify they balance in that currency.
     const totalDebits = input.entries
         .filter(e => e.type === 'DEBIT')
         .reduce((sum, e) => sum + e.amount, 0)
@@ -37,7 +45,11 @@ export async function createTransaction(input: TransactionInput) {
         return { success: false, error: `Transaction not balanced: Debits(${totalDebits}) != Credits(${totalCredits})` }
     }
 
-    // 2. Create Transaction Header
+    // 2. Determine "Original Amount" for the Transaction Header
+    // Usually the sum of debits (or total magnitude)
+    const originalAmount = totalDebits
+
+    // 3. Create Transaction Header
     const { data: transaction, error: txError } = await supabase
         .from('transactions')
         .insert({
@@ -47,7 +59,10 @@ export async function createTransaction(input: TransactionInput) {
             evidence_path: input.evidencePath,
             parent_id: input.parentId,
             vendor: input.vendor,
-            items: input.items || []
+            items: input.items || [],
+            original_currency: currency,
+            original_amount: originalAmount,
+            exchange_rate: exchangeRate
         })
         .select()
         .single()
@@ -56,11 +71,11 @@ export async function createTransaction(input: TransactionInput) {
         return { success: false, error: txError.message }
     }
 
-    // 3. Create Journal Entries
+    // 4. Create Journal Entries (converted to Base Currency)
     const entriesToInsert = input.entries.map(entry => ({
         transaction_id: transaction.id,
         account_id: entry.accountId,
-        amount: entry.amount,
+        amount: entry.amount * exchangeRate, // Convert to Base Currency
         entry_type: entry.type
     }))
 

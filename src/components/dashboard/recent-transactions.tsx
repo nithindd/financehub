@@ -11,12 +11,18 @@ import { ReportTransaction } from "@/actions/reports"
 
 interface RecentTransactionsProps {
     transactions: ReportTransaction[]
+    currency?: string
+    locale?: string
 }
 
-export function RecentTransactions({ transactions }: RecentTransactionsProps) {
-    const currencyFormatter = new Intl.NumberFormat('en-US', {
+export function RecentTransactions({ transactions, currency = 'USD', locale = 'en-US' }: RecentTransactionsProps) {
+    const currencyFormatter = new Intl.NumberFormat(locale, {
         style: 'currency',
-        currency: 'USD',
+        currency: currency,
+    })
+
+    const dateFormatter = new Intl.DateTimeFormat(locale, {
+        dateStyle: 'medium'
     })
 
     const getIcon = (category: string) => {

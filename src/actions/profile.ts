@@ -214,12 +214,15 @@ export async function get2FAFactors() {
 /**
  * Get user preferences
  */
+/**
+ * Get user preferences
+ */
 export async function getUserPreferences() {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-        return { timezone: 'UTC' }
+        return { timezone: 'UTC', currency: 'USD', locale: 'en-US' }
     }
 
     const { data: preferences } = await supabase
@@ -228,13 +231,23 @@ export async function getUserPreferences() {
         .eq('user_id', user.id)
         .single()
 
-    return { timezone: preferences?.timezone || 'UTC' }
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('currency, locale')
+        .eq('id', user.id)
+        .single()
+
+    return {
+        timezone: preferences?.timezone || 'UTC',
+        currency: profile?.currency || 'USD',
+        locale: profile?.locale || 'en-US'
+    }
 }
 
 /**
  * Update user preferences
  */
-export async function updateUserPreferences(timezone: string) {
+export async function updateUserPreferences(data: { timezone: string, currency: string, locale: string }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -242,19 +255,30 @@ export async function updateUserPreferences(timezone: string) {
         return { error: 'Not authenticated' }
     }
 
-    const { error } = await supabase
+    // Update Timezone in user_preferences
+    const { error: prefError } = await supabase
         .from('user_preferences')
         .upsert({
             user_id: user.id,
-            timezone,
+            timezone: data.timezone,
             updated_at: new Date().toISOString()
         }, {
             onConflict: 'user_id'
         })
 
-    if (error) {
-        return { error: error.message }
-    }
+    if (prefError) return { error: prefError.message }
+
+    // Update Currency & Locale in profiles
+    const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+            currency: data.currency,
+            locale: data.locale,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
+
+    if (profileError) return { error: profileError.message }
 
     revalidatePath('/profile')
     return { success: true, message: 'Preferences updated successfully' }

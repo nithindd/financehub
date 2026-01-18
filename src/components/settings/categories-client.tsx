@@ -29,7 +29,8 @@ export function CategoriesClient({ initialAccounts }: CategoriesClientProps) {
         INCOME: initialAccounts.filter(a => a.type === 'INCOME'),
         EXPENSE: initialAccounts.filter(a => a.type === 'EXPENSE'),
         ASSET: initialAccounts.filter(a => a.type === 'ASSET'),
-        LIABILITY: initialAccounts.filter(a => a.type === 'LIABILITY')
+        LIABILITY: initialAccounts.filter(a => a.type === 'LIABILITY'),
+        EQUITY: initialAccounts.filter(a => a.type === 'EQUITY')
     }
 
     const handleEdit = async (e: React.FormEvent) => {

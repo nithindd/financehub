@@ -10,17 +10,19 @@ import Link from 'next/link'
 
 interface AccountCardsProps {
     accounts: AccountBalance[]
+    currency?: string
+    locale?: string
 }
 
-export function AccountCards({ accounts }: AccountCardsProps) {
-    const currencyFormatter = new Intl.NumberFormat('en-US', {
+export function AccountCards({ accounts, currency = 'USD', locale = 'en-US' }: AccountCardsProps) {
+    const currencyFormatter = new Intl.NumberFormat(locale, {
         style: 'currency',
-        currency: 'USD',
+        currency: currency,
     })
 
-    // Filter to only show relevant active accounts (Assets & Liabilities mainly)
+    // Filter to only show relevant active accounts (Assets, Liabilities, Equity)
     const displayAccounts = accounts.filter(a =>
-        ['ASSET', 'LIABILITY'].includes(a.type)
+        ['ASSET', 'LIABILITY', 'EQUITY'].includes(a.type)
     )
 
     const getIcon = (name: string, type: string) => {

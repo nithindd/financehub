@@ -26,6 +26,7 @@ import {
 import { getAccounts, type Account } from '@/actions/accounts'
 import { createTransaction, createTransactionBatch, checkPossibleDuplicate } from '@/actions/transactions'
 import { processInvoice } from '@/actions/ocr'
+import { getUserPreferences } from '@/actions/profile'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/utils/supabase/client'
 
@@ -77,11 +78,23 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
     const [bankAccountId, setBankAccountId] = useState('')
     const fileInputRef = useRef<HTMLInputElement>(null)
 
+    // Currency State
+    const [currency, setCurrency] = useState('USD')
+    const [exchangeRate, setExchangeRate] = useState('1.0')
+    const [userBaseCurrency, setUserBaseCurrency] = useState('USD')
+
     // Fetch accounts on open
     // Fetch accounts on open
     useEffect(() => {
         if (open) {
             getAccounts().then(setAccounts)
+            getUserPreferences().then(prefs => {
+                if (prefs.currency) {
+                    setCurrency(prefs.currency)
+                    setUserBaseCurrency(prefs.currency)
+                }
+            })
+
             if (defaultOpenOcr) {
                 setMode('scan')
                 // Small timeout to ensure DOM is ready
@@ -290,7 +303,9 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
                 // Only first transaction gets the evidence path
                 evidencePath: index === 0 ? (evidencePath || undefined) : undefined,
                 vendor: description,
-                items: lineItems
+                items: lineItems,
+                currency,
+                exchangeRate: parseFloat(exchangeRate)
             }))
 
             const result = await createTransactionBatch(batch)
@@ -312,7 +327,9 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
                 })),
                 evidencePath: evidencePath || undefined,
                 vendor: description,
-                items: lineItems
+                items: lineItems,
+                currency,
+                exchangeRate: parseFloat(exchangeRate)
             })
             if (!result.success) {
                 alert(result.error)
@@ -451,6 +468,35 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
                                     onChange={(e) => setDescription(e.target.value)}
                                     className="sm:col-span-3"
                                 />
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                                <Label htmlFor="currency" className="sm:text-right">Currency</Label>
+                                <div className="sm:col-span-3 flex gap-2">
+                                    <Select value={currency} onValueChange={setCurrency}>
+                                        <SelectTrigger className="w-24">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'INR'].map(c => (
+                                                <SelectItem key={c} value={c}>{c}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {currency !== userBaseCurrency && (
+                                        <div className="flex items-center gap-2 flex-1">
+                                            <Label className="text-xs text-muted-foreground whitespace-nowrap">Ex. Rate (1 {currency} = ? {userBaseCurrency})</Label>
+                                            <Input
+                                                type="number"
+                                                step="0.0001"
+                                                value={exchangeRate}
+                                                onChange={e => setExchangeRate(e.target.value)}
+                                                placeholder="Rate"
+                                                className="w-24"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="space-y-4 border-t pt-4">
