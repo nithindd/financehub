@@ -141,7 +141,7 @@ export default async function Page() {
     <div className="flex min-h-screen flex-col">
       {/* Navigation */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center justify-between px-4 sm:px-8">
+        <div className="container mx-auto flex h-14 items-center justify-between px-4 sm:px-8">
           <div className="flex items-center gap-2 font-bold text-xl text-primary">
             <ShieldCheck className="h-6 w-6" />
             <span>FinanceHub</span>
@@ -160,7 +160,7 @@ export default async function Page() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white pt-16 pb-32">
-          <div className="container px-4 text-center sm:px-8">
+          <div className="container mx-auto px-4 text-center sm:px-8">
             <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl text-primary mb-6">
               Professional Accounting,<br className="hidden sm:inline" /> Simplified by AI.
             </h1>
@@ -184,7 +184,7 @@ export default async function Page() {
 
         {/* Feature Grid */}
         <section id="features" className="py-20 bg-slate-50">
-          <div className="container px-4 sm:px-8">
+          <div className="container mx-auto px-4 sm:px-8">
             <div className="text-center mb-16">
               <h2 className="text-3xl font-bold tracking-tight mb-4">Everything you need to manage your money</h2>
               <p className="text-muted-foreground">Powerful features designed for freelancers, contractors, and small business owners.</p>
@@ -280,7 +280,7 @@ export default async function Page() {
 
         {/* CTA Section */}
         <section className="py-24 bg-primary text-primary-foreground">
-          <div className="container px-4 text-center sm:px-8">
+          <div className="container mx-auto px-4 text-center sm:px-8">
             <h2 className="text-3xl font-bold tracking-tight mb-6">Ready to take control of your finances?</h2>
             <p className="mx-auto max-w-2xl text-lg text-primary-foreground/80 mb-10">
               Join thousands of users who have switched to FinanceHub for smarter, faster accounting.
@@ -295,7 +295,7 @@ export default async function Page() {
       </main>
 
       <footer className="border-t py-8 bg-muted/20">
-        <div className="container px-4 text-center text-sm text-muted-foreground">
+        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
           &copy; {new Date().getFullYear()} FinanceHub. All rights reserved.
         </div>
       </footer>
