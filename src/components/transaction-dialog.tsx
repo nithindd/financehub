@@ -14,7 +14,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { AlertCircle, Calendar as CalendarIcon, Loader2, Upload, X, Trash2, Plus, Camera, Scan, Info } from "lucide-react"
+import { AlertCircle, Calendar as CalendarIcon, Loader2, Upload, X, Trash2, Plus, Camera, Scan, Info, Check } from "lucide-react"
 import { useDebounce } from "@/hooks/use-debounce"
 import { DatePicker } from "@/components/ui/date-picker"
 import {
@@ -762,6 +762,32 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
                             )}
                         </div>
 
+
+
+                        {/* Payment Method Selector - Show if any available */}
+                        {uniquePaymentMethods.length > 0 && (
+                            <div className="flex items-center gap-4 p-3 bg-muted/30 rounded-md border border-dashed">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Label className="text-xs whitespace-nowrap">Payment Method (Optional)</Label>
+                                </div>
+                                <Select
+                                    value={paymentMethodId || "none"}
+                                    onValueChange={(val) => setPaymentMethodId(val === "none" ? null : val)}
+                                >
+                                    <SelectTrigger className="h-8 text-xs w-full max-w-xs bg-white">
+                                        <SelectValue placeholder="Select Card (Default: None/Cash)" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">None / Cash</SelectItem>
+                                        {uniquePaymentMethods.map(pm => (
+                                            <SelectItem key={pm.id} value={pm.id}>
+                                                {pm.name} (...{pm.last_four})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
 
                         <DialogFooter>
                             <Button onClick={handleSubmit} disabled={!isValid || loading}>
