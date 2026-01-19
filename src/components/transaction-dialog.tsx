@@ -545,243 +545,247 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
                             </div>
                         )}
 
-                                    <DatePicker date={date} setDate={setDate} />
-                                </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                            <Label htmlFor="date" className="sm:text-right">
+                                Date
+                            </Label>
+                            <div className="sm:col-span-3">
+                                <DatePicker date={date} setDate={setDate} />
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-                                <Label htmlFor="vendor" className="sm:text-right">
-                                    Vendor
-                                </Label>
-                                <Input
-                                    id="vendor"
-                                    value={vendor}
-                                    placeholder="e.g. Home Depot (Optional)"
-                                    onChange={(e) => setVendor(e.target.value)}
-                                    className="sm:col-span-3"
-                                />
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-                                <Label htmlFor="description" className="sm:text-right">
-                                    Description
-                                </Label>
-                                <Input
-                                    id="description"
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    className="sm:col-span-3"
-                                />
-                            </div>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                            <Label htmlFor="vendor" className="sm:text-right">
+                                Vendor
+                            </Label>
+                            <Input
+                                id="vendor"
+                                value={vendor}
+                                placeholder="e.g. Home Depot (Optional)"
+                                onChange={(e) => setVendor(e.target.value)}
+                                className="sm:col-span-3"
+                            />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                            <Label htmlFor="description" className="sm:text-right">
+                                Description
+                            </Label>
+                            <Input
+                                id="description"
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                className="sm:col-span-3"
+                            />
+                        </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-                                <Label htmlFor="currency" className="sm:text-right">Currency</Label>
-                                <div className="sm:col-span-3 flex gap-2">
-                                    <Select value={currency} onValueChange={setCurrency}>
-                                        <SelectTrigger className="w-24">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'INR'].map(c => (
-                                                <SelectItem key={c} value={c}>{c}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                    {currency !== userBaseCurrency && (
-                                        <div className="flex items-center gap-2 flex-1">
-                                            <Label className="text-xs text-muted-foreground whitespace-nowrap">Ex. Rate (1 {currency} = ? {userBaseCurrency})</Label>
-                                            <Input
-                                                type="number"
-                                                step="0.0001"
-                                                value={exchangeRate}
-                                                onChange={e => setExchangeRate(e.target.value)}
-                                                placeholder="Rate"
-                                                className="w-24"
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="space-y-4 border-t pt-4">
-                                {lineItems.length > 0 ? (
-                                    <>
-                                        <div className="flex items-center justify-between">
-                                            <h4 className="font-medium">Detected Line Items</h4>
-                                            <Button variant="ghost" size="sm" onClick={() => setLineItems([])} className="h-8 text-xs">
-                                                Switch to Simple Mode
-                                            </Button>
-                                        </div>
-
-                                        <div className="p-3 bg-blue-50/50 border border-blue-100 rounded-md space-y-3">
-                                            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-                                                <Label className="sm:text-right text-xs font-semibold text-blue-700">Bank/Asset Account</Label>
-                                                <div className="sm:col-span-3">
-                                                    <Select value={bankAccountId} onValueChange={setBankAccountId}>
-                                                        <SelectTrigger className="bg-white">
-                                                            <SelectValue placeholder="Select Paid From Account" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {accounts.filter(a => a.type === 'ASSET' || a.name.toLowerCase().includes('bank')).map(acc => (
-                                                                <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <p className="text-[10px] text-blue-600 mt-1">This account will be credited for all items below.</p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {lineItems.map((item, index) => (
-                                            <div key={index} className="flex flex-col sm:flex-row gap-2 sm:items-end border-b pb-3 last:border-0">
-                                                <div className="flex-[2]">
-                                                    <Label className="text-[10px] uppercase text-muted-foreground">Item Description</Label>
-                                                    <Input
-                                                        value={item.description}
-                                                        onChange={(e) => {
-                                                            const newItems = [...lineItems]
-                                                            newItems[index].description = e.target.value
-                                                            setLineItems(newItems)
-                                                        }}
-                                                        className="h-8"
-                                                    />
-                                                </div>
-                                                <div className="flex-[1]">
-                                                    <Label className="text-[10px] uppercase text-muted-foreground">Category/Account</Label>
-                                                    <Select
-                                                        value={item.accountId}
-                                                        onValueChange={(val) => {
-                                                            const newItems = [...lineItems]
-                                                            newItems[index].accountId = val
-                                                            setLineItems(newItems)
-                                                        }}
-                                                    >
-                                                        <SelectTrigger className="h-8">
-                                                            <SelectValue placeholder="Account" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {accounts.map(acc => (
-                                                                <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-                                                <div className="w-24">
-                                                    <Label className="text-[10px] uppercase text-muted-foreground">Amount</Label>
-                                                    <Input
-                                                        type="number"
-                                                        value={item.amount}
-                                                        onChange={(e) => {
-                                                            const newItems = [...lineItems]
-                                                            newItems[index].amount = parseFloat(e.target.value) || 0
-                                                            setLineItems(newItems)
-                                                        }}
-                                                        className="h-8 font-mono"
-                                                    />
-                                                </div>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => setLineItems(lineItems.filter((_, i) => i !== index))}
-                                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                            <Label htmlFor="currency" className="sm:text-right">Currency</Label>
+                            <div className="sm:col-span-3 flex gap-2">
+                                <Select value={currency} onValueChange={setCurrency}>
+                                    <SelectTrigger className="w-24">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'INR'].map(c => (
+                                            <SelectItem key={c} value={c}>{c}</SelectItem>
                                         ))}
-                                        <div className="text-right pt-2 border-t">
-                                            <span className="text-sm font-semibold">
-                                                Total: ${lineItems.reduce((sum, item) => sum + item.amount, 0).toFixed(2)}
-                                            </span>
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="flex items-center justify-between">
-                                            <h4 className="font-medium">Entries</h4>
-                                            <div className={cn("text-sm font-bold", isBalanced ? "text-success" : "text-destructive")}>
-                                                {isBalanced ? "Balanced" : `Off by $${Math.abs(totalDebits - totalCredits).toFixed(2)}`}
-                                            </div>
-                                        </div>
-
-                                        {rows.map((row, index) => (
-                                            <div key={index} className="flex flex-col sm:flex-row gap-2 sm:items-end">
-                                                <div className="flex-1">
-                                                    <Label className="text-xs">Account</Label>
-                                                    <Select value={row.accountId} onValueChange={(val) => updateRow(index, 'accountId', val)}>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select Account" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {accounts.map(acc => {
-                                                                const pmName = acc.payment_methods?.[0] ? ` - ${acc.payment_methods[0].name} (...${acc.payment_methods[0].last_four})` : ''
-                                                                return (
-                                                                    <SelectItem key={acc.id} value={acc.id}>
-                                                                        {acc.name} ({acc.type}){pmName}
-                                                                    </SelectItem>
-                                                                )
-                                                            })}
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-                                                <div className="w-full sm:w-24">
-                                                    <Label className="text-xs">Type</Label>
-                                                    <Select value={row.type} onValueChange={(val: 'DEBIT' | 'CREDIT') => updateRow(index, 'type', val)}>
-                                                        <SelectTrigger>
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="DEBIT">Debit</SelectItem>
-                                                            <SelectItem value="CREDIT">Credit</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-                                                <div className="w-full sm:w-32">
-                                                    <Label className="text-xs">Amount</Label>
-                                                    <Input
-                                                        type="number"
-                                                        min="0"
-                                                        step="0.01"
-                                                        value={row.amount}
-                                                        onChange={(e) => updateRow(index, 'amount', e.target.value)}
-                                                    />
-                                                </div>
-                                                <Button variant="ghost" size="icon" onClick={() => removeRow(index)} disabled={rows.length <= 2} className="self-end sm:self-auto">
-                                                    <Trash2 className="h-4 w-4 text-muted-foreground" />
-                                                </Button>
-                                            </div>
-                                        ))}
-
-                                        <Button variant="outline" size="sm" onClick={addRow} className="w-full">
-                                            <Plus className="mr-2 h-4 w-4" /> Add Split
-                                        </Button>
-                                    </>
+                                    </SelectContent>
+                                </Select>
+                                {currency !== userBaseCurrency && (
+                                    <div className="flex items-center gap-2 flex-1">
+                                        <Label className="text-xs text-muted-foreground whitespace-nowrap">Ex. Rate (1 {currency} = ? {userBaseCurrency})</Label>
+                                        <Input
+                                            type="number"
+                                            step="0.0001"
+                                            value={exchangeRate}
+                                            onChange={e => setExchangeRate(e.target.value)}
+                                            placeholder="Rate"
+                                            className="w-24"
+                                        />
+                                    </div>
                                 )}
                             </div>
+                        </div>
 
-                            {/* Payment Method Selector - Show if any available */}
-                            {uniquePaymentMethods.length > 0 && (
-                                <div className="flex items-center gap-4 p-3 bg-muted/30 rounded-md border border-dashed">
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <Label className="text-xs whitespace-nowrap">Payment Method (Optional)</Label>
+                        <div className="space-y-4 border-t pt-4">
+                            {lineItems.length > 0 ? (
+                                <>
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="font-medium">Detected Line Items</h4>
+                                        <Button variant="ghost" size="sm" onClick={() => setLineItems([])} className="h-8 text-xs">
+                                            Switch to Simple Mode
+                                        </Button>
                                     </div>
-                                    <Select
-                                        value={paymentMethodId || "none"}
-                                        onValueChange={(val) => setPaymentMethodId(val === "none" ? null : val)}
-                                    >
-                                        <SelectTrigger className="h-8 text-xs w-full max-w-xs bg-white">
-                                            <SelectValue placeholder="Select Card (Default: None/Cash)" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="none">None / Cash</SelectItem>
-                                            {uniquePaymentMethods.map(pm => (
-                                                <SelectItem key={pm.id} value={pm.id}>
-                                                    {pm.name} (...{pm.last_four})
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+
+                                    <div className="p-3 bg-blue-50/50 border border-blue-100 rounded-md space-y-3">
+                                        <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
+                                            <Label className="sm:text-right text-xs font-semibold text-blue-700">Bank/Asset Account</Label>
+                                            <div className="sm:col-span-3">
+                                                <Select value={bankAccountId} onValueChange={setBankAccountId}>
+                                                    <SelectTrigger className="bg-white">
+                                                        <SelectValue placeholder="Select Paid From Account" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {accounts.filter(a => a.type === 'ASSET' || a.name.toLowerCase().includes('bank')).map(acc => (
+                                                            <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                                <p className="text-[10px] text-blue-600 mt-1">This account will be credited for all items below.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {lineItems.map((item, index) => (
+                                        <div key={index} className="flex flex-col sm:flex-row gap-2 sm:items-end border-b pb-3 last:border-0">
+                                            <div className="flex-[2]">
+                                                <Label className="text-[10px] uppercase text-muted-foreground">Item Description</Label>
+                                                <Input
+                                                    value={item.description}
+                                                    onChange={(e) => {
+                                                        const newItems = [...lineItems]
+                                                        newItems[index].description = e.target.value
+                                                        setLineItems(newItems)
+                                                    }}
+                                                    className="h-8"
+                                                />
+                                            </div>
+                                            <div className="flex-[1]">
+                                                <Label className="text-[10px] uppercase text-muted-foreground">Category/Account</Label>
+                                                <Select
+                                                    value={item.accountId}
+                                                    onValueChange={(val) => {
+                                                        const newItems = [...lineItems]
+                                                        newItems[index].accountId = val
+                                                        setLineItems(newItems)
+                                                    }}
+                                                >
+                                                    <SelectTrigger className="h-8">
+                                                        <SelectValue placeholder="Account" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {accounts.map(acc => (
+                                                            <SelectItem key={acc.id} value={acc.id}>{acc.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="w-24">
+                                                <Label className="text-[10px] uppercase text-muted-foreground">Amount</Label>
+                                                <Input
+                                                    type="number"
+                                                    value={item.amount}
+                                                    onChange={(e) => {
+                                                        const newItems = [...lineItems]
+                                                        newItems[index].amount = parseFloat(e.target.value) || 0
+                                                        setLineItems(newItems)
+                                                    }}
+                                                    className="h-8 font-mono"
+                                                />
+                                            </div>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => setLineItems(lineItems.filter((_, i) => i !== index))}
+                                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    ))}
+                                    <div className="text-right pt-2 border-t">
+                                        <span className="text-sm font-semibold">
+                                            Total: ${lineItems.reduce((sum, item) => sum + item.amount, 0).toFixed(2)}
+                                        </span>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="font-medium">Entries</h4>
+                                        <div className={cn("text-sm font-bold", isBalanced ? "text-success" : "text-destructive")}>
+                                            {isBalanced ? "Balanced" : `Off by $${Math.abs(totalDebits - totalCredits).toFixed(2)}`}
+                                        </div>
+                                    </div>
+
+                                    {rows.map((row, index) => (
+                                        <div key={index} className="flex flex-col sm:flex-row gap-2 sm:items-end">
+                                            <div className="flex-1">
+                                                <Label className="text-xs">Account</Label>
+                                                <Select value={row.accountId} onValueChange={(val) => updateRow(index, 'accountId', val)}>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select Account" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {accounts.map(acc => {
+                                                            const pmName = acc.payment_methods?.[0] ? ` - ${acc.payment_methods[0].name} (...${acc.payment_methods[0].last_four})` : ''
+                                                            return (
+                                                                <SelectItem key={acc.id} value={acc.id}>
+                                                                    {acc.name} ({acc.type}){pmName}
+                                                                </SelectItem>
+                                                            )
+                                                        })}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="w-full sm:w-24">
+                                                <Label className="text-xs">Type</Label>
+                                                <Select value={row.type} onValueChange={(val: 'DEBIT' | 'CREDIT') => updateRow(index, 'type', val)}>
+                                                    <SelectTrigger>
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="DEBIT">Debit</SelectItem>
+                                                        <SelectItem value="CREDIT">Credit</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="w-full sm:w-32">
+                                                <Label className="text-xs">Amount</Label>
+                                                <Input
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    value={row.amount}
+                                                    onChange={(e) => updateRow(index, 'amount', e.target.value)}
+                                                />
+                                            </div>
+                                            <Button variant="ghost" size="icon" onClick={() => removeRow(index)} disabled={rows.length <= 2} className="self-end sm:self-auto">
+                                                <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                            </Button>
+                                        </div>
+                                    ))}
+
+                                    <Button variant="outline" size="sm" onClick={addRow} className="w-full">
+                                        <Plus className="mr-2 h-4 w-4" /> Add Split
+                                    </Button>
+                                </>
                             )}
                         </div>
+
+                        {/* Payment Method Selector - Show if any available */}
+                        {uniquePaymentMethods.length > 0 && (
+                            <div className="flex items-center gap-4 p-3 bg-muted/30 rounded-md border border-dashed">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Label className="text-xs whitespace-nowrap">Payment Method (Optional)</Label>
+                                </div>
+                                <Select
+                                    value={paymentMethodId || "none"}
+                                    onValueChange={(val) => setPaymentMethodId(val === "none" ? null : val)}
+                                >
+                                    <SelectTrigger className="h-8 text-xs w-full max-w-xs bg-white">
+                                        <SelectValue placeholder="Select Card (Default: None/Cash)" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">None / Cash</SelectItem>
+                                        {uniquePaymentMethods.map(pm => (
+                                            <SelectItem key={pm.id} value={pm.id}>
+                                                {pm.name} (...{pm.last_four})
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
                         <DialogFooter>
                             <Button onClick={handleSubmit} disabled={!isValid || loading}>
                                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -790,7 +794,7 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
                         </DialogFooter>
                     </>
                 )
-}
+                }
             </DialogContent >
         </Dialog >
     )
