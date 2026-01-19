@@ -111,21 +111,6 @@ export function MobileNav() {
                                         <FileText className="h-8 w-8 text-primary" />
                                         <span>Upload Statement (CSV/PDF)</span>
                                     </Button>
-
-                                    <div className="col-span-2 pt-2 border-t mt-2 flex flex-col gap-2">
-                                        <Link href="/manual" className="w-full" onClick={() => setOpen(false)}>
-                                            <Button variant="ghost" className="w-full gap-2 justify-start pl-2">
-                                                <HelpCircle className="h-4 w-4" />
-                                                Help & User Manual
-                                            </Button>
-                                        </Link>
-                                        <Button variant="ghost" className="w-full justify-start pl-2 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={handleSignOut}>
-                                            <span className="flex items-center gap-2">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-log-out"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" x2="9" y1="12" y2="12" /></svg>
-                                                Sign Out
-                                            </span>
-                                        </Button>
-                                    </div>
                                 </div>
                                 <DrawerFooter>
                                     <DrawerClose asChild>

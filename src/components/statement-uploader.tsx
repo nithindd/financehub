@@ -24,7 +24,7 @@ import {
 import { FileText, Upload, Loader2, Check, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import Papa from 'papaparse'
-import { createTransaction, createTransactionBatch } from '@/actions/transactions'
+import { createTransaction, createTransactionBatch, checkPossibleDuplicate } from '@/actions/transactions'
 import { getAccounts, type Account } from '@/actions/accounts'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/utils/supabase/client'
@@ -146,10 +146,12 @@ export function StatementUploader({ children, open: controlledOpen, onOpenChange
 
         setImporting(true)
 
-        // Find Expense account for balancing
+        // Find Expense account
         const expenseAcc = accounts.find(a => a.type === 'EXPENSE')
         const batch: any[] = []
+        let duplicateCount = 0
 
+        // 1. Prepare Batch
         for (const row of rawData) {
             const dateStr = row[dateCol]
             const desc = row[descCol]
@@ -165,11 +167,11 @@ export function StatementUploader({ children, open: controlledOpen, onOpenChange
             batch.push({
                 date: new Date(dateStr),
                 description: desc,
+                itemAmount: amount, // Temp storage for dup check
                 entries: [
                     { accountId: targetAccountId, type: isDebit ? 'CREDIT' : 'DEBIT', amount: amount },
                     { accountId: expenseAcc?.id || '', type: isDebit ? 'DEBIT' : 'CREDIT', amount: amount }
                 ],
-                // Only the first transaction carries the evidence link for the whole batch
                 evidencePath: batch.length === 0 ? (evidencePath || undefined) : undefined
             })
         }
@@ -179,6 +181,39 @@ export function StatementUploader({ children, open: controlledOpen, onOpenChange
             setImporting(false)
             return
         }
+
+        // 2. Check Batch for Duplicates (Sequential check for safety/simplicity)
+        // Note: For very large batches, we might want a bulk check action, but loop is fine for <100 items.
+        // We will punish the user with a little wait time for data integrity.
+        let potentialDuplicatesFound = 0
+
+        // Optimize: Check just the first few or check all? Let's check all but break early if too many.
+        // Actually, let's just sample or check all.
+        try {
+            // We'll check concurrently but limit concurrency? No, simplistic approach first.
+            const checks = batch.map(async (item) => {
+                const dupes = await checkPossibleDuplicate({
+                    date: item.date,
+                    amount: item.itemAmount,
+                    description: item.description
+                })
+                return dupes.length > 0
+            })
+
+            const results = await Promise.all(checks)
+            potentialDuplicatesFound = results.filter(Boolean).length
+        } catch (err) {
+            console.error("Duplicate check failed", err)
+        }
+
+        if (potentialDuplicatesFound > 0) {
+            if (!confirm(`Warning: ${potentialDuplicatesFound} transactions in this list look like duplicates of existing records.\n\nDo you want to proceed with the import anyway?`)) {
+                setImporting(false)
+                return
+            }
+        }
+
+        // 3. Commit Import
 
         try {
             const result = await createTransactionBatch(batch)

@@ -14,7 +14,8 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Plus, Trash2, Loader2, Upload, Check, AlertCircle, Camera } from "lucide-react"
+import { AlertCircle, Calendar as CalendarIcon, Loader2, Upload, X, Trash2, Plus, Camera, Scan, Info } from "lucide-react"
+import { useDebounce } from "@/hooks/use-debounce"
 import { DatePicker } from "@/components/ui/date-picker"
 import {
     Select,
@@ -103,6 +104,51 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
     const [currency, setCurrency] = useState('USD')
     const [exchangeRate, setExchangeRate] = useState('1.0')
     const [userBaseCurrency, setUserBaseCurrency] = useState('USD')
+
+    // Duplicate Detection State
+    const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null)
+    const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false)
+
+    // Debounce values for duplicate checking
+    const debouncedAmount = useDebounce(
+        lineItems.length > 0
+            ? lineItems.reduce((sum, item) => sum + item.amount, 0)
+            : rows.reduce((sum, row) => sum + (row.type === 'DEBIT' ? (parseFloat(row.amount) || 0) : 0), 0),
+        800
+    )
+    const debouncedVendor = useDebounce(vendor || description, 800)
+    const debouncedDate = useDebounce(date, 800)
+
+    // Effect to check for duplicates
+    useEffect(() => {
+        const check = async () => {
+            if (!debouncedDate || !debouncedAmount || debouncedAmount <= 0) {
+                setDuplicateWarning(null)
+                return
+            }
+
+            setIsCheckingDuplicates(true)
+            try {
+                const duplicates = await checkPossibleDuplicate({
+                    date: debouncedDate,
+                    amount: debouncedAmount,
+                    description: debouncedVendor
+                })
+
+                if (duplicates.length > 0) {
+                    setDuplicateWarning(`Found ${duplicates.length} similar transaction(s) on ${debouncedDate.toLocaleDateString()}`)
+                } else {
+                    setDuplicateWarning(null)
+                }
+            } catch (error) {
+                console.error("Error checking duplicates:", error)
+            } finally {
+                setIsCheckingDuplicates(false)
+            }
+        }
+
+        check()
+    }, [debouncedDate, debouncedAmount, debouncedVendor])
 
     // Fetch accounts on open
     useEffect(() => {
@@ -277,29 +323,8 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
                     if (y && m && d) {
                         const localDate = new Date(y, m - 1, d, 12, 0, 0)
                         if (!isNaN(localDate.getTime())) {
+                            // Check for duplicates (removed blocking confirm, using reactive UI instead)
                             setDate(localDate)
-
-                            // Check for duplicates
-                            const checkAmount = totalAmount || (calcLineItems.length > 0 ? calcLineItems.reduce((sum, i) => sum + i.amount, 0) : 0)
-
-                            if (checkAmount > 0) {
-                                checkPossibleDuplicate({
-                                    date: localDate,
-                                    amount: typeof checkAmount === 'string' ? parseFloat(checkAmount) : checkAmount,
-
-                                    description: vendor || ''
-                                }).then(dupes => {
-                                    if (dupes.length > 0) {
-                                        const msg = `Possible Duplicate Detected!\n\nFound ${dupes.length} similar transaction(s) on ${dateStr}:\n` +
-                                            dupes.map(d => `- ${d.description} ($${d.amount})`).join('\n') +
-                                            `\n\nDo you want to continue?`
-                                        if (!confirm(msg)) {
-                                            resetForm()
-                                            setOpen(false)
-                                        }
-                                    }
-                                })
-                            }
                         }
                     }
                 }
@@ -520,12 +545,6 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
                             </div>
                         )}
 
-                        <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-4 items-center gap-4">
-                                <Label htmlFor="date" className="sm:text-right">
-                                    Date
-                                </Label>
-                                <div className="sm:col-span-3">
                                     <DatePicker date={date} setDate={setDate} />
                                 </div>
                             </div>
@@ -770,8 +789,9 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
                             </Button>
                         </DialogFooter>
                     </>
-                )}
-            </DialogContent>
-        </Dialog>
+                )
+}
+            </DialogContent >
+        </Dialog >
     )
 }
