@@ -33,20 +33,20 @@ graph TD
     end
 
     %% Key Interactions
-    Browser -->|RPC / Server Actions| API
-    PWA -->|Camera Capture| Browser
+    Browser -->| "RPC / Server Actions" | API
+    PWA -->| "Camera Capture" | Browser
     
-    API -->|Query/Mutate| DB
-    API -->|Auth Check| Auth
-    API -->|Upload/Download| Storage
+    API -->| "Query/Mutate" | DB
+    API -->| "Auth Check" | Auth
+    API -->| "Upload/Download" | Storage
     
-    API -->|Send Prompt| Gemini
-    Gemini -->|Extracted JSON| API
+    API -->| "Send Prompt" | Gemini
+    Gemini -->| "Extracted JSON" | API
     
-    API -->|Send Email| Resend
+    API -->| "Send Email" | Resend
     
     %% Storage Links
-    Browser -->|Direct Upload (Signed URL)| Storage
+    Browser -->| "Direct Upload (Signed URL)" | Storage
 
     classDef primary fill:#2563eb,stroke:#1d4ed8,color:white;
     classDef secondary fill:#475569,stroke:#334155,color:white;
