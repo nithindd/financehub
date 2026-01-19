@@ -239,8 +239,9 @@ export function TransactionDialog({ children, defaultOpenOcr = false, open: cont
             return
         }
 
-        const publicUrl = supabase.storage.from('evidence').getPublicUrl(fileName).data.publicUrl
-        setEvidencePath(publicUrl)
+        // For private buckets, we store the path, not the public URL.
+        // The server will generate a signed URL when reading.
+        setEvidencePath(fileName)
 
         // 2. Process with OCR
         const formData = new FormData()

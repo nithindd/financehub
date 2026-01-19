@@ -92,8 +92,8 @@ export function StatementUploader({ children, open: controlledOpen, onOpenChange
             return
         }
 
-        const publicUrl = supabase.storage.from('evidence').getPublicUrl(fileName).data.publicUrl
-        setEvidencePath(publicUrl)
+        // For private buckets, we store the path, not the public URL.
+        setEvidencePath(fileName)
 
         // 2. Parse file
         if (file.type === 'application/pdf') {

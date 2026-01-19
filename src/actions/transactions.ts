@@ -215,6 +215,29 @@ export async function getTransactionById(id: string) {
         .single()
 
     if (error) return null
+
+    // Generate Signed URL for evidence if it exists
+    if (data.evidence_path) {
+        let path = data.evidence_path
+        // Handle legacy public URLs: extract path after /evidence/
+        // Example: .../storage/v1/object/public/evidence/user_id/file.jpg
+        if (path.includes('/evidence/')) {
+            const parts = path.split('/evidence/')
+            if (parts.length > 1) {
+                path = parts[1]
+            }
+        }
+
+        const { data: signedData } = await supabase
+            .storage
+            .from('evidence')
+            .createSignedUrl(path, 60 * 60) // 1 hour expiry
+
+        if (signedData) {
+            data.evidence_path = signedData.signedUrl
+        }
+    }
+
     return data
 }
 
