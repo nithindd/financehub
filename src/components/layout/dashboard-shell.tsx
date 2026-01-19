@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from "react"
+import { ShieldCheck } from "lucide-react"
 import { Sidebar } from "./sidebar"
 import { MobileNav } from "./mobile-nav"
 
