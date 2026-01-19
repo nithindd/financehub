@@ -15,9 +15,9 @@ export function DashboardShell({ children }: DashboardShellProps) {
             <div className="flex flex-col flex-1 min-w-0 mb-16 md:mb-0">
                 {/* Mobile Header: Logo & Branding + Help Link */}
                 <header className="md:hidden flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur sticky top-0 z-40 h-16">
-                    <div className="flex items-center gap-2">
-                        {/* Use next/image for optimized logo */}
-                        <img src="/logo.png" alt="FinanceHub" className="h-8 w-auto object-contain" />
+                    <div className="flex items-center gap-2 font-semibold text-primary">
+                        <ShieldCheck className="h-6 w-6" />
+                        <span className="">FinanceHub</span>
                     </div>
                     <a href="/manual"> {/* Using a tag to ensure navigation even if client router fails, or just simplified */}
                         <button className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 w-9">

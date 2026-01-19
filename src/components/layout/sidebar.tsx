@@ -55,7 +55,8 @@ export function Sidebar() {
                 <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6 bg-background/95 backdrop-blur">
                     <Link href="/" className="flex items-center gap-2 font-semibold text-primary">
                         <Link href="/" className="flex items-center gap-2 font-semibold text-primary">
-                            <img src="/logo.png" alt="FinanceHub" className="h-8 w-auto object-contain py-1" />
+                            <ShieldCheck className="h-6 w-6" />
+                            <span className="">FinanceHub</span>
                         </Link>
                     </Link>
                 </div>
