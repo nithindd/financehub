@@ -50,7 +50,7 @@ export default async function ManualPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <p className="text-sm">
-                                Stop typing in receipts. Our Gemini-powered OCR (Optical Character Recognition) extracts data automatically.
+                                Stop typing in receipts. Our auto-enhanced camera captures and extracts data immediately.
                             </p>
                             <div className="grid gap-3">
                                 <section className="flex items-start gap-3 rounded-lg border p-3">
@@ -58,8 +58,17 @@ export default async function ManualPage() {
                                         <CheckCircle2 className="h-4 w-4" />
                                     </div>
                                     <div>
-                                        <h4 className="font-semibold">How to use:</h4>
-                                        <p className="text-xs text-muted-foreground">Click "Scan Invoice" on the dashboard. Upload a photo or PDF. Our AI now extracts individual line items, tax, and tips automatically, saving you from manual splitting.</p>
+                                        <h4 className="font-semibold">How to use (Mobile):</h4>
+                                        <p className="text-xs text-muted-foreground">Tap the central <strong>(+)</strong> button and select <strong>"Scan Invoice"</strong>. This launches your camera directly.</p>
+                                    </div>
+                                </section>
+                                <section className="flex items-start gap-3 rounded-lg border p-3">
+                                    <div className="mt-0.5 rounded-full bg-orange-50 p-1 text-orange-600">
+                                        <Info className="h-4 w-4" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-semibold">Duplicate Detection:</h4>
+                                        <p className="text-xs text-muted-foreground">The system checks for existing transactions with the same date/amount/vendor as you scan. A blue warning banner will appear if potential duplicates are found.</p>
                                     </div>
                                 </section>
                             </div>
@@ -76,16 +85,15 @@ export default async function ManualPage() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <p className="text-sm">
-                                Bulk import transaction history from your bank or credit card statements.
+                                Bulk import transaction history from your bank (CSV) or credit card statements (PDF).
                             </p>
                             <div className="grid gap-3">
                                 <div className="rounded-lg border bg-muted/30 p-4">
-                                    <h4 className="mb-2 text-sm font-semibold">Statement Features:</h4>
+                                    <h4 className="mb-2 text-sm font-semibold">Features:</h4>
                                     <ul className="list-inside list-disc space-y-1 text-xs text-muted-foreground">
-                                        <li>Supports CSV uploads</li>
-                                        <li><strong>New:</strong> AI PDF Statement Parsing</li>
-                                        <li>Smart duplicate detection with warnings</li>
-                                        <li>Background vendor matching</li>
+                                        <li><strong>Batch Duplicate Check:</strong> We analyze every row *before* import and warn you if we find matches in your history.</li>
+                                        <li><strong>AI PDF Parsing:</strong> Upload a PDF bank statement to auto-extract table data.</li>
+                                        <li><strong>Evidence Linking:</strong> The original file is stored securely and linked to the batch.</li>
                                     </ul>
                                 </div>
                             </div>

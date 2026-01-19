@@ -6,13 +6,65 @@ A professional double-entry accounting system with AI-powered invoice scanning, 
 
 ## 🏗️ Architecture
 
-![FinanceHub Architecture](./public/architecture.png)
+
+```mermaid
+graph TD
+    subgraph Client ["Client (Desktop & Mobile)"]
+        Browser[Next.js Client Components]
+        PWA[Mobile PWA Features]
+    end
+
+    subgraph Backend ["Next.js Server (Vercel)"]
+        API[Server Actions]
+        AuthHandler[Supabase Auth Helpers]
+        OCR_Service[OCR Service Wrapper]
+    end
+
+    subgraph Database ["Supabase (PostgreSQL)"]
+        DB[(Postgres DB)]
+        Auth[GoTrue Auth]
+        Storage[Storage Buckets]
+        RLS[Row Level Security]
+    end
+
+    subgraph External ["External Services"]
+        Gemini[Google Gemini AI]
+        Resend[Resend Email API]
+    end
+
+    %% Key Interactions
+    Browser -->|RPC / Server Actions| API
+    PWA -->|Camera Capture| Browser
+    
+    API -->|Query/Mutate| DB
+    API -->|Auth Check| Auth
+    API -->|Upload/Download| Storage
+    
+    API -->|Send Prompt| Gemini
+    Gemini -->|Extracted JSON| API
+    
+    API -->|Send Email| Resend
+    
+    %% Storage Links
+    Browser -->|Direct Upload (Signed URL)| Storage
+
+    classDef primary fill:#2563eb,stroke:#1d4ed8,color:white;
+    classDef secondary fill:#475569,stroke:#334155,color:white;
+    classDef external fill:#10b981,stroke:#059669,color:white;
+    classDef db fill:#f59e0b,stroke:#d97706,color:white;
+
+    class Client,Browser,PWA primary;
+    class Backend,API,AuthHandler,OCR_Service secondary;
+    class External,Gemini,Resend external;
+    class Database,DB,Auth,Storage,RLS db;
+```
 
 The application follows a modern serverless architecture:
 - **Frontend**: Next.js 15 with React Server Components and Client Components
 - **Backend**: Next.js Server Actions for type-safe API calls
 - **Database**: Supabase PostgreSQL with Row Level Security
-- **External Services**: Google OAuth, Gemini AI, Resend Email
+- **Services**: Google Gemini (AI) and Resend (Email)
+
 
 
 ## ✨ Features
