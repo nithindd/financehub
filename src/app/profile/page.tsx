@@ -1,0 +1,604 @@
+'use client'
+
+import * as React from 'react'
+import { Suspense } from 'react'
+import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { User, Lock, Shield, AlertCircle, CheckCircle2, Loader2, Settings, HelpCircle } from 'lucide-react'
+import { PreferencesForm } from '@/components/profile/preferences-form'
+import { getUserProfile, updateProfile, enable2FA, verify2FA, disable2FA, get2FAFactors, getUserPreferences } from '@/actions/profile'
+import { updatePassword, signOut } from '@/actions/auth'
+import { PasswordStrengthIndicator } from '@/components/password-strength-indicator'
+import { UsernameInput } from '@/components/username-input'
+import QRCode from 'qrcode'
+import { deleteUserAccount } from '@/actions/user'
+import { DashboardShell } from '@/components/layout/dashboard-shell'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+
+import { exportUserData } from '@/actions/export'
+import { Download } from 'lucide-react'
+
+function ProfileContent() {
+    const searchParams = useSearchParams()
+    const [profile, setProfile] = React.useState<any>(null)
+    const [loading, setLoading] = React.useState(true)
+    const [updateStatus, setUpdateStatus] = React.useState<{ type: 'success' | 'error'; message: string } | null>(null)
+    const [isOAuthUser, setIsOAuthUser] = React.useState(false)
+
+    // Personal Info Form
+    const [personalInfo, setPersonalInfo] = React.useState({
+        firstName: '',
+        lastName: '',
+        username: '',
+        email: ''
+    })
+
+    // Security Form
+    const [currentPassword, setCurrentPassword] = React.useState('')
+    const [newPassword, setNewPassword] = React.useState('')
+    const [confirmPassword, setConfirmPassword] = React.useState('')
+
+    // 2FA State
+    const [twoFAEnabled, setTwoFAEnabled] = React.useState(false)
+    const [showSetup2FA, setShowSetup2FA] = React.useState(false)
+    const [qrCodeUrl, setQrCodeUrl] = React.useState('')
+    const [twoFASecret, setTwoFASecret] = React.useState('')
+    const [twoFAFactorId, setTwoFAFactorId] = React.useState('')
+    const [verificationCode, setVerificationCode] = React.useState('')
+    const [currentFactorId, setCurrentFactorId] = React.useState('')
+
+    // Delete Account State
+    const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
+    const [isDeleting, setIsDeleting] = React.useState(false)
+
+    // Export State
+    const [isExporting, setIsExporting] = React.useState(false)
+
+    React.useEffect(() => {
+        loadProfile()
+    }, [])
+
+    // ... [Previous handler functions: loadProfile, handleUpdateProfile, handleChangePassword, handleEnable2FA, handleVerify2FA, handleDisable2FA] ...
+
+    async function loadProfile() {
+        setLoading(true)
+        const result = await getUserProfile()
+
+        if (result.error) {
+            setUpdateStatus({ type: 'error', message: result.error })
+            setLoading(false)
+            return
+        }
+
+        if (result.profile) {
+            setProfile(result.profile)
+
+            // Detect if user is OAuth (Google) user
+            const isOAuth = result.profile.provider === 'google'
+            setIsOAuthUser(isOAuth)
+
+            setPersonalInfo({
+                firstName: result.profile.first_name || '',
+                lastName: result.profile.last_name || '',
+                username: result.profile.username || '',
+                email: result.profile.email || ''
+            })
+        }
+
+        // Check 2FA status
+        const factorsResult = await get2FAFactors()
+        if (factorsResult.factors && factorsResult.factors.length > 0) {
+            setTwoFAEnabled(true)
+            setCurrentFactorId(factorsResult.factors[0].id)
+        }
+
+        setLoading(false)
+    }
+
+    async function handleUpdateProfile() {
+        setUpdateStatus(null)
+        const result = await updateProfile({
+            firstName: personalInfo.firstName,
+            lastName: personalInfo.lastName,
+            username: personalInfo.username
+        })
+
+        if (result.error) {
+            setUpdateStatus({ type: 'error', message: result.error })
+        } else {
+            setUpdateStatus({ type: 'success', message: result.message || 'Profile updated successfully' })
+            loadProfile()
+        }
+    }
+
+    async function handleChangePassword() {
+        setUpdateStatus(null)
+
+        if (newPassword !== confirmPassword) {
+            setUpdateStatus({ type: 'error', message: 'New passwords do not match' })
+            return
+        }
+
+        const result = await updatePassword(newPassword)
+
+        if (result.error) {
+            setUpdateStatus({ type: 'error', message: result.error })
+        } else {
+            setUpdateStatus({ type: 'success', message: result.message || 'Password updated successfully' })
+            setCurrentPassword('')
+            setNewPassword('')
+            setConfirmPassword('')
+        }
+    }
+
+    async function handleEnable2FA() {
+        setUpdateStatus(null)
+        const result = await enable2FA()
+
+        if (result.error) {
+            setUpdateStatus({ type: 'error', message: result.error })
+            return
+        }
+
+        if (!result.id || !result.secret || !result.uri) {
+            setUpdateStatus({ type: 'error', message: 'Failed to enable 2FA' })
+            return
+        }
+
+        setTwoFAFactorId(result.id)
+        setTwoFASecret(result.secret)
+
+        // Generate QR code
+        try {
+            const url = await QRCode.toDataURL(result.uri)
+            setQrCodeUrl(url)
+            setShowSetup2FA(true)
+        } catch (err) {
+            setUpdateStatus({ type: 'error', message: 'Failed to generate QR code' })
+        }
+    }
+
+    async function handleVerify2FA() {
+        setUpdateStatus(null)
+        const result = await verify2FA(twoFAFactorId, verificationCode)
+
+        if (result.error) {
+            setUpdateStatus({ type: 'error', message: result.error })
+        } else {
+            setUpdateStatus({ type: 'success', message: result.message || '2FA enabled successfully' })
+            setShowSetup2FA(false)
+            setVerificationCode('')
+            setTwoFAEnabled(true)
+            setCurrentFactorId(twoFAFactorId)
+        }
+    }
+
+    async function handleDisable2FA() {
+        setUpdateStatus(null)
+        const result = await disable2FA(currentFactorId)
+
+        if (result.error) {
+            setUpdateStatus({ type: 'error', message: result.error })
+        } else {
+            setUpdateStatus({ type: 'success', message: result.message || '2FA disabled successfully' })
+            setTwoFAEnabled(false)
+            setCurrentFactorId('')
+        }
+    }
+
+    async function handleDeleteAccount() {
+        setIsDeleting(true)
+        const result = await deleteUserAccount()
+
+        if (result.error) {
+            setUpdateStatus({ type: 'error', message: result.error })
+            setIsDeleting(false)
+            setShowDeleteDialog(false)
+        } else {
+            window.location.href = '/'
+        }
+    }
+
+    async function handleExportData() {
+        setIsExporting(true)
+        setUpdateStatus({ type: 'success', message: 'Export initiated. You will receive an email shortly.' })
+
+        const result = await exportUserData()
+
+        if (result.error) {
+            setUpdateStatus({ type: 'error', message: result.error })
+        } else {
+            // Success message already set conservatively, but we can update if needed
+        }
+        setIsExporting(false)
+    }
+
+    if (loading) {
+        return (
+            <DashboardShell>
+                <div className="flex items-center justify-center p-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+            </DashboardShell>
+        )
+    }
+
+    return (
+        <DashboardShell>
+            <div className="max-w-4xl mb-12">
+                <div className="mb-8">
+                    <h1 className="text-2xl font-bold text-foreground">Account Settings</h1>
+                    <p className="text-muted-foreground mt-1">Manage your personal information, security, and preferences</p>
+                </div>
+
+                {updateStatus && (
+                    <Alert variant={updateStatus.type === 'error' ? 'destructive' : 'default'} className={`mb-6 ${updateStatus.type === 'success' ? 'border-green-500 bg-green-50 text-green-700' : ''}`}>
+                        {updateStatus.type === 'error' ? <AlertCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                        <AlertTitle>{updateStatus.type === 'error' ? 'Error' : 'Success'}</AlertTitle>
+                        <AlertDescription>{updateStatus.message}</AlertDescription>
+                    </Alert>
+                )}
+
+                <Tabs defaultValue={searchParams.get('tab') || 'account'} className="space-y-6">
+                    <TabsList className={`grid w-full ${isOAuthUser ? 'grid-cols-3' : 'grid-cols-4'}`}>
+                        <TabsTrigger value="account" className="flex items-center gap-2">
+                            <User className="h-4 w-4" />
+                            Account
+                        </TabsTrigger>
+                        {!isOAuthUser && (
+                            <TabsTrigger value="security" className="flex items-center gap-2">
+                                <Lock className="h-4 w-4" />
+                                Security
+                            </TabsTrigger>
+                        )}
+                        <TabsTrigger value="2fa" className="flex items-center gap-2">
+                            <Shield className="h-4 w-4" />
+                            2FA
+                        </TabsTrigger>
+                        <TabsTrigger value="settings" className="flex items-center gap-2">
+                            <Settings className="h-4 w-4" />
+                            Settings
+                        </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="account" className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Personal Information</CardTitle>
+                                <CardDescription>
+                                    {isOAuthUser ? 'Your account information from Google' : 'Update your personal details'}
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {!isOAuthUser ? (
+                                    <>
+                                        <UsernameInput
+                                            value={personalInfo.username}
+                                            onChange={(value) => setPersonalInfo({ ...personalInfo, username: value })}
+                                        />
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="firstName">First Name</Label>
+                                            <Input
+                                                id="firstName"
+                                                value={personalInfo.firstName}
+                                                onChange={(e) => setPersonalInfo({ ...personalInfo, firstName: e.target.value })}
+                                                placeholder="John"
+                                                disabled={isOAuthUser}
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="lastName">Last Name</Label>
+                                            <Input
+                                                id="lastName"
+                                                value={personalInfo.lastName}
+                                                onChange={(e) => setPersonalInfo({ ...personalInfo, lastName: e.target.value })}
+                                                placeholder="Doe"
+                                                disabled={isOAuthUser}
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="email">Email</Label>
+                                            <Input
+                                                id="email"
+                                                type="email"
+                                                value={personalInfo.email}
+                                                disabled
+                                                className="bg-muted"
+                                            />
+                                            <p className="text-xs text-muted-foreground">Email cannot be changed at this time</p>
+                                        </div>
+
+                                        <Button onClick={handleUpdateProfile} className="w-full sm:w-auto">
+                                            Save Changes
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="space-y-2">
+                                            <Label className="text-sm text-muted-foreground">Full Name</Label>
+                                            <p className="text-lg font-medium">
+                                                {personalInfo.firstName || personalInfo.lastName
+                                                    ? `${personalInfo.firstName} ${personalInfo.lastName}`.trim()
+                                                    : 'Not provided'}
+                                            </p>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-sm text-muted-foreground">Email</Label>
+                                            <p className="text-lg font-medium">{personalInfo.email}</p>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="text-sm text-muted-foreground">Username</Label>
+                                            <p className="text-lg font-medium">{personalInfo.username}</p>
+                                        </div>
+                                        <Alert>
+                                            <AlertCircle className="h-4 w-4" />
+                                            <AlertTitle>Google Account</AlertTitle>
+                                            <AlertDescription>
+                                                Your account is managed by Google. To update your name or email, please visit your Google Account settings.
+                                            </AlertDescription>
+                                        </Alert>
+                                    </>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Data & Privacy</CardTitle>
+                                <CardDescription>Manage your data export and deletion</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="space-y-4">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
+                                        <div className="space-y-1">
+                                            <h4 className="font-medium">Export Your Data</h4>
+                                            <p className="text-sm text-muted-foreground">Download a copy of your personal data, transactions, and account history.</p>
+                                        </div>
+                                        <Button variant="outline" onClick={handleExportData} disabled={isExporting}>
+                                            {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                                            Export Data
+                                        </Button>
+                                    </div>
+
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                        <div className="space-y-1">
+                                            <h4 className="font-medium text-destructive">Delete Account</h4>
+                                            <p className="text-sm text-muted-foreground">Permanently delete your account and all associated data. This action cannot be undone.</p>
+                                        </div>
+                                        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                                            <DialogTrigger asChild>
+                                                <Button variant="destructive">Delete Account</Button>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>Are you absolutely sure?</DialogTitle>
+                                                    <DialogDescription>
+                                                        This action cannot be undone. This will permanently delete your account,
+                                                        transactions, and remove your data from our servers.
+                                                    </DialogDescription>
+                                                </DialogHeader>
+                                                <DialogFooter>
+                                                    <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={isDeleting}>
+                                                        Cancel
+                                                    </Button>
+                                                    <Button variant="destructive" onClick={handleDeleteAccount} disabled={isDeleting}>
+                                                        {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                                        Yes, Delete My Account
+                                                    </Button>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="security">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Change Password</CardTitle>
+                                <CardDescription>Update your password to keep your account secure</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="newPassword">New Password</Label>
+                                    <Input
+                                        id="newPassword"
+                                        type="password"
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                    />
+                                    <PasswordStrengthIndicator password={newPassword} />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                                    <Input
+                                        id="confirmPassword"
+                                        type="password"
+                                        value={confirmPassword}
+                                        onChange={(e) => setConfirmPassword(e.target.value)}
+                                    />
+                                </div>
+
+                                <Button onClick={handleChangePassword} className="w-full sm:w-auto">
+                                    Update Password
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="2fa">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Two-Factor Authentication</CardTitle>
+                                <CardDescription>
+                                    Add an extra layer of security to your account
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {!twoFAEnabled && !showSetup2FA && (
+                                    <div className="space-y-4">
+                                        <p className="text-sm text-muted-foreground">
+                                            Two-factor authentication (2FA) adds an extra layer of security by requiring a code from your authenticator app when signing in.
+                                        </p>
+                                        <Button onClick={handleEnable2FA}>
+                                            <Shield className="mr-2 h-4 w-4" />
+                                            Enable 2FA
+                                        </Button>
+                                    </div>
+                                )}
+
+                                {showSetup2FA && (
+                                    <div className="space-y-4">
+                                        <Alert>
+                                            <Shield className="h-4 w-4" />
+                                            <AlertTitle>Set up your authenticator app</AlertTitle>
+                                            <AlertDescription>
+                                                Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
+                                            </AlertDescription>
+                                        </Alert>
+
+                                        <div className="flex justify-center">
+                                            {qrCodeUrl && <img src={qrCodeUrl} alt="2FA QR Code" className="border rounded-lg p-4" />}
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label>Or enter this secret manually:</Label>
+                                            <Input value={twoFASecret} readOnly className="bg-muted font-mono text-sm" />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label htmlFor="verificationCode">Enter 6-digit code from your app</Label>
+                                            <Input
+                                                id="verificationCode"
+                                                type="text"
+                                                maxLength={6}
+                                                value={verificationCode}
+                                                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                                                placeholder="000000"
+                                                className="font-mono text-lg tracking-widest text-center"
+                                            />
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                            <Button onClick={handleVerify2FA} disabled={verificationCode.length !== 6}>
+                                                Verify & Enable
+                                            </Button>
+                                            <Button variant="outline" onClick={() => setShowSetup2FA(false)}>
+                                                Cancel
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {twoFAEnabled && !showSetup2FA && (
+                                    <div className="space-y-4">
+                                        <Alert className="border-green-500 bg-green-50">
+                                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                            <AlertTitle className="text-green-600">2FA is enabled</AlertTitle>
+                                            <AlertDescription className="text-green-600">
+                                                Your account is protected with two-factor authentication
+                                            </AlertDescription>
+                                        </Alert>
+
+                                        <Button variant="destructive" onClick={handleDisable2FA}>
+                                            Disable 2FA
+                                        </Button>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="settings">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Preferences</CardTitle>
+                                <CardDescription>Customize your FinanceHub experience</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <PreferencesForm
+                                    initialTimezone={profile?.timezone || 'UTC'}
+                                    initialCurrency={profile?.currency || 'USD'}
+                                    initialLocale={profile?.locale || 'en-US'}
+                                />
+                            </CardContent>
+                        </Card>
+
+                        <Card className="mt-6">
+                            <CardHeader>
+                                <CardTitle>Management</CardTitle>
+                                <CardDescription>Manage categories and vendor mappings</CardDescription>
+                            </CardHeader>
+                            <CardContent className="grid gap-2">
+                                <Link href="/settings/categories" className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent hover:text-accent-foreground transition-colors group">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-primary/10 rounded-full group-hover:bg-primary/20 transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><path d="M3 3v18h18" /><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3" /></svg>
+                                        </div>
+                                        <span className="font-medium">Manage Categories</span>
+                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground group-hover:text-foreground transition-colors"><path d="m9 18 6-6-6-6" /></svg>
+                                </Link>
+                                <Link href="/settings/vendors" className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent hover:text-accent-foreground transition-colors group">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-orange-500/10 rounded-full group-hover:bg-orange-500/20 transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-600"><path d="M3 21h18" /><path d="M5 21V7l8-4 8 4v14" /><path d="M8 21v-8h8v8" /></svg>
+                                        </div>
+                                        <span className="font-medium">Vendor Mappings</span>
+                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground group-hover:text-foreground transition-colors"><path d="m9 18 6-6-6-6" /></svg>
+                                </Link>
+                                <Link href="/settings/household" className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent hover:text-accent-foreground transition-colors group">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-blue-500/10 rounded-full group-hover:bg-blue-500/20 transition-colors">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                                        </div>
+                                        <span className="font-medium">Household &amp; Family Sharing</span>
+                                    </div>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground group-hover:text-foreground transition-colors"><path d="m9 18 6-6-6-6" /></svg>
+                                </Link>
+                            </CardContent>
+                        </Card>
+
+                        <div className="mt-6 flex justify-center">
+                            <form action={signOut}>
+                                <Button variant="destructive" className="w-full sm:w-auto gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" x2="9" y1="12" y2="12" /></svg>
+                                    Sign Out
+                                </Button>
+                            </form>
+                        </div>
+
+                    </TabsContent>
+                </Tabs>
+            </div>
+        </DashboardShell>
+    )
+}
+
+export default function ProfilePage() {
+    return (
+        <Suspense fallback={<div className="flex h-screen w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+            <ProfileContent />
+        </Suspense>
+    )
+}
