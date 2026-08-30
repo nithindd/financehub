@@ -36,6 +36,12 @@ yarn-error.log*
 # vercel
 .vercel
 
+# claude code local launch config
+.claude
+
+# local-only planning docs
+/docs
+
 # typescript
 *.tsbuildinfo
 
